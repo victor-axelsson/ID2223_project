@@ -12,4 +12,3 @@ class MidiChannelEvent:
 		self.deltaTime = deltaTime
 		self.param1 = param1
 		self.param2 = param2
-	

@@ -1,21 +1,10 @@
 from src.headerChunk import HeaderChunk
 from src.trackChunk import TrackChunk
-from src.events.TimeSignature import TimeSignature
-from src.events.KeySignature import KeySignature
-from src.events.SetTempo import SetTempo
 from src.events.EndOfTrack import EndOfTrack
-from src.events.WTFIsThisEvent import WTFIsThisEvent
-from src.events.SequenceTrackName import SequenceTrackName
-from src.events.CopyrightNotice import CopyrightNotice
-from src.events.TextEvent import TextEvent
-from src.events.Controller import Controller
-from src.events.ProgramChange import ProgramChange
-from src.events.NoteOn import NoteOn
 from src.events.MetaEvent import MetaEvent
 from src.events.SystemExclusiveEvent import SystemExclusiveEvent
 from src.events.MidiChannelEvent import MidiChannelEvent
 import binascii
-
 
 class MidiParser:
 
@@ -44,145 +33,9 @@ class MidiParser:
 			for i in range(8):
 				yield ((b >> i) & 1, i)
 
-	def getMetadataType(self, type):
-		mapper = {
-			b'\x00': 'SequenceNumber',
-			b'\x01': 'TextEvent',
-			b'\x02': 'CopyrightNotice',
-			b'\x03': 'SequenceTrackName',	
-			b'\x04': 'InstrumentName',	
-			b'\x05': 'Lyrics',
-			b'\x06': 'Marker',
-			b'\x07': 'CuePoint',
-			b'\x20': 'MIDIChannelPrefix',
-			b'\x2F': 'EndOfTrack',
-			b'\x51': 'SetTempo',
-			b'\x54': 'SMPTEOffset',
-			b'\x58': 'TimeSignature',
-			b'\x59': 'KeySignature',
-			b'\x7F': 'SequencerSpecific',
-			b'!': "WTFIsThisEvent"
-		}
-
-		return mapper[type]
-
-	def getMidiChannelType(self, type):
-		#We only care about the first 4 bits
-		type = int.from_bytes(type, byteorder="big")
-		if type <= 15:
-			type = type << 4
-		else:
-			type = type & 0b11110000
-		
-		print("Type => " + str(type))
-		#8
-		if type == 0b10000000:
-			return 'NoteOff'
-		#9
-		elif type == 0b10010000:
-			return 'NoteOn'
-		#A
-		elif type == 0b10100000:
-			return 'NoteAftertouch'
-		#B
-		elif type == 0b10110000:
-			return 'Controller'
-		#C
-		elif type == 0b11000000:
-			return 'ProgramChange'
-		#D
-		elif type == 0b11010000:
-			return 'ChannelAftertouch'
-		#E
-		elif type == 0b11100000:
-			return 'PitchBend'
-		elif type == 0b00100000 :
-			return 'WTFIsThisEvent'
-		else:
-			raise Exception("No such channel type: " + str(type))
-
-	def buildMetadataEvent(self, eventType, bufferData):
-		if eventType == 'SequenceNumber':
-			raise Exception("Not implemented")
-		elif eventType == 'TextEvent':
-			return TextEvent(bufferData)
-		elif eventType == 'CopyrightNotice':
-			return CopyrightNotice(bufferData)
-		elif eventType == 'SequenceTrackName':
-			return SequenceTrackName(bufferData)
-		elif eventType == 'InstrumentName':
-			raise Exception("Not implemented")
-		elif eventType == 'Lyrics':
-			raise Exception("Not implemented")
-		elif eventType == 'Marker':
-			raise Exception("Not implemented")
-		elif eventType == 'CuePoint':
-			raise Exception("Not implemented")
-		elif eventType == 'MIDIChannelPrefix':
-			raise Exception("Not implemented")
-		elif eventType == 'EndOfTrack':
-			return EndOfTrack(bufferData)
-		elif eventType == 'SetTempo':
-			return SetTempo(bufferData)
-		elif eventType == 'SMPTEOffset':
-			raise Exception("Not implemented")
-		elif eventType == 'TimeSignature':
-			return TimeSignature(bufferData)
-		elif eventType == 'KeySignature':
-			return KeySignature(bufferData)
-		elif eventType == 'SequencerSpecific':
-			raise Exception("Not implemented")
-		elif eventType == 'WTFIsThisEvent':
-			return WTFIsThisEvent(bufferData)
-		else:
-			raise Exception("There is no such metadata event")
-
-	def buildMidiChannelEvent(self, eventType, bufferData):
-		print(eventType)
-
-		if eventType == 'NoteOff':
-			raise Exception("Not implemented")
-		elif eventType == 'NoteOn':
-			return NoteOn(bufferData)
-		elif eventType == 'NoteAftertouch':
-			raise Exception("Not implemented")
-		elif eventType == 'Controller':
-			return Controller(bufferData)
-		elif eventType == 'ProgramChange':
-			return ProgramChange(bufferData)
-		elif eventType == 'ChannelAftertouch':
-			raise Exception("Not implemented")
-		elif eventType == 'PitchBend':
-			raise Exception("Not implemented")
-		elif eventType == 'WTFIsThisEvent':
-			return WTFIsThisEvent(bufferData, 1)
-		else:
-			raise Exception("There is no such midi channel event")
-
 	def printByte(self, byte):
 		for bit, i in self.bits(byte):
 				print("Bit: " + str(bit) + " i: " + str(i))
-
-	def readVaqFromBuffer(self, dataBuffer):
-		vaqString = ""
-		cursor = 0
-		deltaTime = 0
-		for i in range(0, len(dataBuffer)):
-			byte = dataBuffer[i]
-			asString = bin(int.from_bytes(byte, byteorder="big")).strip('0b')
-			vaqString = asString[1:] + vaqString
-
-			if int.from_bytes(byte, byteorder="big") & 0b10000000 != 0b10000000:
-				cursor += 1
-				break
-
-			cursor += 1
-
-		if vaqString != "":
-			deltaTime = int(vaqString, 2)
-
-		return (deltaTime, cursor)
-
 
 	def readVaq(self, stream):
 		d, stream = self.readBytes(1, stream)
