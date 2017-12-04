@@ -7,3 +7,5 @@ filepath = "/Users/victoraxelsson/Desktop/data_projects/ML_project/01 Menuet.mid
 
 
 parser = MidiParser(filepath)
+
+print(parser.tracks)

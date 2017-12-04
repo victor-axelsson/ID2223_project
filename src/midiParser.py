@@ -10,6 +10,7 @@ class MidiParser:
 
 	filepath = None
 	headerChunk = None
+	tracks = None
 
 	def __init__(self, filepath):
 		self.filepath = filepath
@@ -91,11 +92,10 @@ class MidiParser:
 					events.append(MetaEvent(type, length, data, deltaTime))
 
 				else:
-					print(d)
 					type = d
 					length, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
 					data, trackEventDataBinaryString = self.readBytes(length, trackEventDataBinaryString)
-					
+
 					events.append(SystemExclusiveEvent(type, length, data, deltaTime))
 
 			else:
@@ -128,51 +128,21 @@ class MidiParser:
 
 	def _format(self):	
 		with open(self.filepath, "rb") as binary_file:
-			# Read the whole file at once
-			#data = binary_file.read()
-			#stream = bin(int.from_bytes(data, byteorder="big")).strip('0b')
-			#stream = int.from_bytes(data, byteorder="big")
-
-			#print(self.readBits(4, stream))
 
 			# Seek position and read N bytes
 			binary_file.seek(0)  # Go to beginning
 
-			header = self._formatHeader(binary_file)
-			
-			
+			#Grab the header of the file
+			header = self._formatHeader(binary_file)			
+
+			self.tracks = []
+
+			#Grab all the tracks
 			for i in range(0, header.numberOfTracks):
 				track = self._formatTrack(binary_file)
+				self.tracks.append(track)
 				print("Track " + str(i) + "/" + str(header.numberOfTracks))
-			
-			
-			#print(hex(int(L[2], 2)))
-
-			#track2 = self._formatTrack(binary_file)
-
-			
-			#for i in range(0, header.numberOfTracks):
 
 
-
-
-			'''
-			byte = binary_file.read(1)
-			for bit, i in self.bits(byte):
-				print("Bit: " + str(bit) + " i: " + str(i))
-			'''
-
-
-			#print(bin(int.from_bytes(binary_file.read(1), byteorder="big")).strip('0b'))
-			#print(bin(int.from_bytes(binary_file.read(1), byteorder="big")).strip('0b'))
-			#print(bin(int.from_bytes(binary_file.read(1), byteorder="big")).strip('0b'))
-			#print(bin(int.from_bytes(binary_file.read(1), byteorder="big")).strip('0b'))
-			#print(print(bin(int.from_bytes(binary_file.read(1), byteorder="big")).strip('0b')))
-			#print(print(bin(int.from_bytes(binary_file.read(1), byteorder="big")).strip('0b')))
-			#print(print(bin(int.from_bytes(binary_file.read(1), byteorder="big")).strip('0b')))
-
-
-			#trackChunk = TrackChunk(chunkID, chunkSize, trackEventData)
-			#trackChunk.printIt()
 
 
