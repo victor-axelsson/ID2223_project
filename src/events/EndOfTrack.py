@@ -1,11 +1,11 @@
-class TimeSignature:
+class EndOfTrack:
 
 	dataBuffer = None
 	def __init__(self, dataBuffer):
 		self.dataBuffer = dataBuffer
 
 	def getOffset(self):
-		return 4
+		return 0
 
 	def getClassName(self):
-		return "TimeSignature"
+		return "EndOfTrack"

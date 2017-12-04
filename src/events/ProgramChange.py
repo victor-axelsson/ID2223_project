@@ -1,11 +1,10 @@
-class TimeSignature:
-
+class ProgramChange:
 	dataBuffer = None
 	def __init__(self, dataBuffer):
 		self.dataBuffer = dataBuffer
 
 	def getOffset(self):
-		return 4
+		return 1
 
 	def getClassName(self):
-		return "TimeSignature"
+		return "ProgramChange"
