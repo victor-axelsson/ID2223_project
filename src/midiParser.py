@@ -11,6 +11,11 @@ from src.events.TextEvent import TextEvent
 from src.events.Controller import Controller
 from src.events.ProgramChange import ProgramChange
 from src.events.NoteOn import NoteOn
+from src.events.MetaEvent import MetaEvent
+from src.events.SystemExclusiveEvent import SystemExclusiveEvent
+from src.events.MidiChannelEvent import MidiChannelEvent
+import binascii
+
 
 class MidiParser:
 
@@ -178,6 +183,23 @@ class MidiParser:
 
 		return (deltaTime, cursor)
 
+
+	def readVaq(self, stream):
+		d, stream = self.readBytes(1, stream)
+		vaq = ""
+		deltaTime = 0
+		while d[0] == '1':
+			vaq = vaq + d[1:]
+			d, stream = self.readBytes(1, stream)
+
+		vaq = vaq + d[1:]
+		deltaTime = int(vaq, 2)
+		return (deltaTime, stream)
+
+	def printBinaryAsAscii(self, data):
+		n = int('0b' + data, 2)
+		print(binascii.unhexlify('%x' % n))
+
 	def _formatTrack(self, binary_file):
 		#Parse the track data
 		chunkID = binary_file.read(4)
@@ -186,6 +208,67 @@ class MidiParser:
 		events = []
 
 		trackEventData = binary_file.read(chunkSize)
+		trackEventDataBinaryString = bin(int.from_bytes(trackEventData, byteorder="big")).strip('0b')
+		
+		d, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
+		deltaTime = 0
+		first = True
+
+		while len(trackEventDataBinaryString) > 0:
+
+			if not first:
+				deltaTime, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
+
+			#Check first 4 bits
+			if d == '1111':
+				d, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
+
+				#Metadata events
+				if d == '1111':
+					print("meta event")
+
+					type, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
+					length, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
+					data, trackEventDataBinaryString = self.readBytes(length, trackEventDataBinaryString)
+
+					events.append(MetaEvent(type, length, data, deltaTime))
+
+				else:
+					print("System exclusive events")
+					print(d)
+					type = d
+					length, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
+					data, trackEventDataBinaryString = self.readBytes(length, trackEventDataBinaryString)
+					
+					events.append(SystemExclusiveEvent(type, length, data, deltaTime))
+
+			else:
+				print("Midi channel events 1")
+
+				type = d
+				channel, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
+
+				#Midi channel events C and D have length 1. The other have length 2
+				length = 2
+				param1, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
+				param2 = None
+				if type == '1100' or type == '1101':
+					length = 1
+				else:
+					param2, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
+
+				events.append(MidiChannelEvent(type, length, deltaTime, param1, param2))
+
+			first = False
+
+		#print(events)
+		
+
+		'''
+		#d, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
+		
+
+		
 		L = [trackEventData[i:i+1] for i in range(len(trackEventData))]
 		
 		while len(L) > 0:
@@ -224,19 +307,34 @@ class MidiParser:
 				#raise Exception("halt")
 		
 		return TrackChunk(chunkID, chunkSize, events)
+		'''
+		return None
 		
+	def readBits(self, nrOfBits, stream):
+		bits = stream[0:nrOfBits]
+		return (bits, stream[nrOfBits:])
+
+	def readBytes(self, nrOfBytes, stream):
+		nrOfBits = nrOfBytes * 8
+		bits = stream[0:nrOfBits]
+		return (bits, stream[nrOfBits:])
+
+
+
 	def _format(self):	
 		with open(self.filepath, "rb") as binary_file:
 			# Read the whole file at once
-			data = binary_file.read()
-			#print(data)
+			#data = binary_file.read()
+			#stream = bin(int.from_bytes(data, byteorder="big")).strip('0b')
+			#stream = int.from_bytes(data, byteorder="big")
+
+			#print(self.readBits(4, stream))
 
 			# Seek position and read N bytes
 			binary_file.seek(0)  # Go to beginning
 
 			header = self._formatHeader(binary_file)
 			track = self._formatTrack(binary_file)
-
 			track2 = self._formatTrack(binary_file)
 
 			
