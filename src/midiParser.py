@@ -202,9 +202,9 @@ class MidiParser:
 
 	def _formatTrack(self, binary_file):
 		#Parse the track data
-		chunkID = binary_file.read(4)
+		chunkId = binary_file.read(4)
 		chunkSize = self.toInt(binary_file.read(4))
-		
+
 		events = []
 
 		trackEventData = binary_file.read(chunkSize)
@@ -225,16 +225,19 @@ class MidiParser:
 
 				#Metadata events
 				if d == '1111':
-					print("meta event")
-
 					type, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
+
+					#If you get a end of track, just exit
+					if type == '00101111':
+						events.append(EndOfTrack())
+						break;
+
 					length, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
 					data, trackEventDataBinaryString = self.readBytes(length, trackEventDataBinaryString)
 
 					events.append(MetaEvent(type, length, data, deltaTime))
 
 				else:
-					print("System exclusive events")
 					print(d)
 					type = d
 					length, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
@@ -243,8 +246,6 @@ class MidiParser:
 					events.append(SystemExclusiveEvent(type, length, data, deltaTime))
 
 			else:
-				print("Midi channel events 1")
-
 				type = d
 				channel, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
 
@@ -261,54 +262,7 @@ class MidiParser:
 
 			first = False
 
-		#print(events)
-		
-
-		'''
-		#d, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
-		
-
-		
-		L = [trackEventData[i:i+1] for i in range(len(trackEventData))]
-		
-		while len(L) > 0:
-			deltaTime, cursor = self.readVaqFromBuffer(L)
-
-			#Read the event type
-			if L[cursor] == b'\xFF':
-				cursor += 1
-				print("Metadata events")
-				type = self.getMetadataType(L[cursor])
-
-				#We use +2 to skip the event type and length fields
-				event = self.buildMetadataEvent(type, L[cursor:])
-				cursor = cursor + event.getOffset() + 2
-				events.append(event)
-				L = L[cursor:]
-
-			elif L[cursor] == b'\xF0':
-				cursor += 1
-				print("System Exclusive Events")
-			else:
-				print("MIDI channel events")
-				print(L[cursor])
-				print(L)
-				#print(trackEventData)
-				type = self.getMidiChannelType(L[cursor])
-				midiChannel = int.from_bytes(L[cursor], byteorder="big") & 0b00001111
-				
-				#We use +2 to skip the event type and length fields
-				event = self.buildMidiChannelEvent(type, L[cursor:])
-				
-
-				cursor = cursor + event.getOffset() +1
-				events.append(event)
-				L = L[cursor:]
-				#raise Exception("halt")
-		
-		return TrackChunk(chunkID, chunkSize, events)
-		'''
-		return None
+		return TrackChunk(chunkId, chunkSize, events)
 		
 	def readBits(self, nrOfBits, stream):
 		bits = stream[0:nrOfBits]
@@ -318,8 +272,6 @@ class MidiParser:
 		nrOfBits = nrOfBytes * 8
 		bits = stream[0:nrOfBits]
 		return (bits, stream[nrOfBits:])
-
-
 
 	def _format(self):	
 		with open(self.filepath, "rb") as binary_file:
@@ -334,9 +286,11 @@ class MidiParser:
 			binary_file.seek(0)  # Go to beginning
 
 			header = self._formatHeader(binary_file)
-			track = self._formatTrack(binary_file)
-			track2 = self._formatTrack(binary_file)
-
+			
+			
+			for i in range(0, header.numberOfTracks):
+				track = self._formatTrack(binary_file)
+				print("Track " + str(i) + "/" + str(header.numberOfTracks))
 			
 			
 			#print(hex(int(L[2], 2)))
