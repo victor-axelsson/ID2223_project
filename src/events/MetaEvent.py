@@ -16,6 +16,7 @@ class MetaEvent:
 		self.deltaTime = deltaTime
 
 	def printDataAsAscii(self):
-		n = int('0b' + self.data, 2)
-		print(binascii.unhexlify('%x' % n))
+		n = int(self.data, 2)
+		stringRep = n.to_bytes((n.bit_length() + 7) // 8, 'big').decode()
+		print(stringRep)
 
