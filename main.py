@@ -1,11 +1,18 @@
-import binascii
-from src.midiParser import * 
+import os
+import sys
 
 
-#filepath = "/Users/victoraxelsson/Desktop/data_projects/ML_project/130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]/Classical_www.midiworld.com_MIDIRip/bach/acttrag.mid"
-filepath = "/Users/victoraxelsson/Desktop/data_projects/ML_project/01 Menuet.mid"
+
+def parse_path(args):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    file_name = "01 Menuet.mid"
+    file_path = "{}/{}".format(script_dir, file_name)
+    return file_path
 
 
-parser = MidiParser(filepath)
+if __name__ == '__main__':
+    from src.midiParser import *
 
-print(parser.tracks)
+    file_path = parse_path(sys.argv)
+    parser = MidiParser(file_path)
+    print(parser.tracks)
