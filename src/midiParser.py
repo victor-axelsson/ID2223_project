@@ -77,16 +77,16 @@ class MidiParser:
 		trackEventData = binary_file.read(chunkSize)
 		trackEventDataBinaryString = bin(int.from_bytes(trackEventData, byteorder="big")).strip('0b')
 
-		d, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
 		deltaTime = 0
 		first = True
 
 		while len(trackEventDataBinaryString) > 0:
 
+
 			if not first:
 				# Parse # ticks since last event (can be 0)
 				deltaTime, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
-
+			d, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
 			#Check first 4 bits
 			if d == Events.MetaOrSysex:
 				d, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
@@ -104,7 +104,7 @@ class MidiParser:
 					data, trackEventDataBinaryString = self.readBytes(length, trackEventDataBinaryString)
 
 					ev =  MetaEvent(type, length, data, deltaTime)
-					print("Processed MetaEvent: {}".format(Events.Meta.fromType[type]))
+					print("Processed MetaEvent: {}".format(ev))
 					events.append(ev)
 
 				else:
@@ -128,7 +128,7 @@ class MidiParser:
 					length = 1
 				else:
 					param2, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
-
+				print("Processed ChannelEvent: {}".format(Events.Channel.fromType[type]))
 				events.append(MidiChannelEvent(type, length, deltaTime, param1, param2))
 
 			first = False

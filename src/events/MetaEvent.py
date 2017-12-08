@@ -1,3 +1,6 @@
+from src.events.types import Events
+
+
 class MetaEvent:
 	type = None
 	length = None
@@ -11,7 +14,7 @@ class MetaEvent:
 		self.deltaTime = deltaTime
 
 	def __repr__(self):
-		return "[MetaEvent, type: {}, length: {}, deltaTime: {}, data: {}]".format(self.type, self.length, self.deltaTime, self.data)
+		return "[MetaEvent, textType: {}, type: {}, length: {}, deltaTime: {}, data: {}]".format(Events.Meta.fromType[self.type], self.type, self.length, self.deltaTime, self.data)
 
 	def dataToAscii(self):
 		n = int(self.data, 2)
