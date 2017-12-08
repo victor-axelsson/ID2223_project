@@ -84,7 +84,7 @@ class MidiParser:
 					#If you get a end of track, just exit
 					if type == '00101111':
 						events.append(EndOfTrack())
-						break;
+						break
 
 					length, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
 					data, trackEventDataBinaryString = self.readBytes(length, trackEventDataBinaryString)
@@ -138,10 +138,10 @@ class MidiParser:
 			self.tracks = []
 
 			#Grab all the tracks
-			for i in range(0, header.numberOfTracks):
+			for i in range(header.numberOfTracks):
 				track = self._formatTrack(binary_file)
 				self.tracks.append(track)
-				print("Track " + str(i) + "/" + str(header.numberOfTracks))
+				print("Track " + str(i + 1) + "/" + str(header.numberOfTracks))
 
 
 
