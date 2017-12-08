@@ -103,7 +103,8 @@ class MidiParser:
 					length, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
 					data, trackEventDataBinaryString = self.readBytes(length, trackEventDataBinaryString)
 
-					events.append(MetaEvent(type, length, data, deltaTime))
+					ev =  MetaEvent(type, length, data, deltaTime)
+					events.append(ev)
 
 				else:
 					type = d
@@ -113,6 +114,7 @@ class MidiParser:
 					events.append(SystemExclusiveEvent(type, length, data, deltaTime))
 
 			else:
+				# Parse channel message
 				type = d
 				channel, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
 
@@ -120,7 +122,8 @@ class MidiParser:
 				length = 2
 				param1, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
 				param2 = None
-				if type == '1100' or type == '1101':
+				# TODO Could encode these lengths in event/message definitions
+				if type == Events.Channel.ProgramChange or type == Events.Channel.ChannelAftertouch:
 					length = 1
 				else:
 					param2, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
