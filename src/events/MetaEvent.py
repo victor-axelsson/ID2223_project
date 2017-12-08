@@ -1,6 +1,8 @@
 import binascii
 
 class MetaEvent:
+	Start = '1111'
+	EndOfTrack = '00101111'
 
 	type = None
 	length = None

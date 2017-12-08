@@ -13,4 +13,4 @@ if __name__ == '__main__':
 	from src.midiParser import *
 
 	parser = MidiParser(parsePath(sys.argv))
-	print(parser.tracks)
+	print(str(parser.tracks))

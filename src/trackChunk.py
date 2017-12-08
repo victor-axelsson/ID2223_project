@@ -8,6 +8,9 @@ class TrackChunk:
 		self.chunkSize = chunkSize
 		self.events = events
 
+	def __repr__(self):
+		return "chunkid: {}, chunkSize: {}, events: {}\n".format(self.chunkId, self.chunkSize, self.events)
+
 	def printIt(self):
 		print("chunkId =>" + str(self.chunkId))
 		print("chunkSize =>" + str(self.chunkSize))

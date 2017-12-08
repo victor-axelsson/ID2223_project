@@ -1,3 +1,4 @@
+from src.events.types import Events
 from src.headerChunk import HeaderChunk
 from src.trackChunk import TrackChunk
 from src.events.EndOfTrack import EndOfTrack
@@ -38,7 +39,13 @@ class MidiParser:
 		for bit, i in self.bits(byte):
 			print("Bit: " + str(bit) + " i: " + str(i))
 
+
 	def readVaq(self, stream):
+		"""
+		Parse a variable-length quantity value in MIDI chunks
+		:param stream: the input data stream, aligned to the start of the variable-length quantity
+		:return: tuple of parsed delta time and the remainder of the input data stream
+		"""
 		d, stream = self.readBytes(1, stream)
 		vaq = ""
 		deltaTime = 0
@@ -55,12 +62,18 @@ class MidiParser:
 		print(binascii.unhexlify('%x' % n))
 
 	def _formatTrack(self, binary_file):
-		#Parse the track data
+		# Parse the track data
 		chunkId = binary_file.read(4)
+		if not chunkId == b'MTrk':
+			print("WARN: Expected track chunk type to equal 'MTrk, got {}. Skipping...".format(chunkId))
+			# TODO parse through rest of record until next MTrk? Check dependencies in caller
+			return
+
 		chunkSize = self.toInt(binary_file.read(4))
 
 		events = []
 
+		# Extract sequence of events from data
 		trackEventData = binary_file.read(chunkSize)
 		trackEventDataBinaryString = bin(int.from_bytes(trackEventData, byteorder="big")).strip('0b')
 
@@ -71,18 +84,19 @@ class MidiParser:
 		while len(trackEventDataBinaryString) > 0:
 
 			if not first:
+				# Parse # ticks since last event (can be 0)
 				deltaTime, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
 
 			#Check first 4 bits
-			if d == '1111':
+			if d == Events.MetaOrSysex:
 				d, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
 
 				#Metadata events
-				if d == '1111':
+				if d == Events.Meta.Start:
 					type, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
 
 					#If you get a end of track, just exit
-					if type == '00101111':
+					if type == Events.Meta.EndOfTrack:
 						events.append(EndOfTrack())
 						break
 
