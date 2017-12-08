@@ -1,0 +1,33 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Simple MIDI Player</title>
+  <meta name="description" content="Simple MIDI player">
+  <meta name="author" content="Johan Mickos">
+
+  <!--<link rel="stylesheet" href="css/styles.css?v=1.0">-->
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+    <input id="midi-in" type="file">Select MIDI file
+    <script src='https://cdn.jsdelivr.net/gh/colxi/midi-parser-js@2.1.2/src/midi-parser.min.js'></script>
+
+    <script>
+        MIDIParser.addListener( document.getElementById('midi-in') , function(data) {
+            // Render contents to DOM
+            var container = document.createElement('pre');
+            container.innerHTML = JSON.stringify(data, undefined, 2);
+
+            document.body.appendChild(container);
+            console.log(stuff);
+        } )
+    </script>
+</body>
+</html>
