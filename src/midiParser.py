@@ -21,14 +21,14 @@ class MidiParser:
 
 	def _formatHeader(self, binary_file):
 		#Read the Header for the file		    
-	    chunkID = binary_file.read(4)
-	    chunkSize = self.toInt(binary_file.read(4))
-	    formatType = self.toInt(binary_file.read(2))
-	    numberOfTracks = self.toInt(binary_file.read(2))
-	    timeDivision = self.toInt(binary_file.read(2))
+		chunkID = binary_file.read(4)
+		chunkSize = self.toInt(binary_file.read(4))
+		formatType = self.toInt(binary_file.read(2))
+		numberOfTracks = self.toInt(binary_file.read(2))
+		timeDivision = self.toInt(binary_file.read(2))
 
-	    return HeaderChunk(chunkID, chunkSize, formatType, numberOfTracks, timeDivision)
-   
+		return HeaderChunk(chunkID, chunkSize, formatType, numberOfTracks, timeDivision)
+
 	def bits(self, bytes):
 		for b in bytes:
 			for i in range(8):
@@ -36,7 +36,7 @@ class MidiParser:
 
 	def printByte(self, byte):
 		for bit, i in self.bits(byte):
-				print("Bit: " + str(bit) + " i: " + str(i))
+			print("Bit: " + str(bit) + " i: " + str(i))
 
 	def readVaq(self, stream):
 		d, stream = self.readBytes(1, stream)
@@ -63,7 +63,7 @@ class MidiParser:
 
 		trackEventData = binary_file.read(chunkSize)
 		trackEventDataBinaryString = bin(int.from_bytes(trackEventData, byteorder="big")).strip('0b')
-		
+
 		d, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
 		deltaTime = 0
 		first = True
@@ -116,7 +116,7 @@ class MidiParser:
 			first = False
 
 		return TrackChunk(chunkId, chunkSize, events)
-		
+
 	def readBits(self, nrOfBits, stream):
 		bits = stream[0:nrOfBits]
 		return (bits, stream[nrOfBits:])
@@ -126,14 +126,14 @@ class MidiParser:
 		bits = stream[0:nrOfBits]
 		return (bits, stream[nrOfBits:])
 
-	def _format(self):	
+	def _format(self):
 		with open(self.filepath, "rb") as binary_file:
 
 			# Seek position and read N bytes
 			binary_file.seek(0)  # Go to beginning
 
 			#Grab the header of the file
-			header = self._formatHeader(binary_file)			
+			header = self._formatHeader(binary_file)
 
 			self.tracks = []
 
