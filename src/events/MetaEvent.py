@@ -1,9 +1,4 @@
-import binascii
-
 class MetaEvent:
-	Start = '1111'
-	EndOfTrack = '00101111'
-
 	type = None
 	length = None
 	data = None
@@ -14,6 +9,9 @@ class MetaEvent:
 		self.length = length
 		self.data = data
 		self.deltaTime = deltaTime
+
+	def __repr__(self):
+		return "[MetaEvent, type: {}, length: {}, deltaTime: {}, data: {}]".format(self.type, self.length, self.deltaTime, self.data)
 
 	def printDataAsAscii(self):
 		n = int(self.data, 2)

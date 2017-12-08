@@ -14,4 +14,4 @@ class MidiChannelEvent:
 		self.param2 = param2
 
 	def __repr__(self):
-		return "type: {}, length: {}, deltaTime: {}, param1: {}, param2: {}".format(self.type, self.length, self.deltaTime, self.param1, self.param2)
+		return "[MidiChannelEvent, type: {}, length: {}, deltaTime: {}, param1: {}, param2: {}]".format(self.type, self.length, self.deltaTime, self.param1, self.param2)
