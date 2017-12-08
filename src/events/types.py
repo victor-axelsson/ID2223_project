@@ -1,8 +1,11 @@
 from collections import Hashable
 
+
 class Events(object):
 	"""Storage class for common event codes in stringified binary"""
 	MetaOrSysex = '1111'        # All meta and system exlusive events begin with 0xF
+
+	fromType = dict((v, k) for (k, v) in locals().items() if not str(k).startswith("__") )
 
 	class Meta(object):
 		Start = '1111'          # Meta events extend metaOMetaOrSysex with another F, as 0xFF
@@ -13,8 +16,15 @@ class Events(object):
 		Lyric           = '00000101'
 		Marker          = '00000110'
 		CuePoint        = '00000111'
+		ChannelPrefix   = '00100000'
+		EndOfTrack      = '00101111'
+		SetTempo        = '01010001'
+		SMTPEOffset     = '01010100'
+		TimeSignature   = '01011000'
+		KeySignature    = '01011001'
 
-		EndOfTrack      = '00101111' # TODO This should really be 0x2F00 = b'0010 1111 0000 0000'
+		fromType = dict((v, k) for (k, v) in locals().items() if not str(k).startswith("__") )
+
 
 	class Channel(object):
 		NoteOff             = '1000'
@@ -23,6 +33,8 @@ class Events(object):
 		ControlChange       = '1011'
 		ProgramChange       = '1100'
 		ChannelAftertouch   = '1101'
+
+		fromType = dict((v, k) for (k, v) in locals().items())
 
 
 	def __init__(self):

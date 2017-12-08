@@ -104,6 +104,7 @@ class MidiParser:
 					data, trackEventDataBinaryString = self.readBytes(length, trackEventDataBinaryString)
 
 					ev =  MetaEvent(type, length, data, deltaTime)
+					print("Processed MetaEvent: {}".format(Events.Meta.fromType[type]))
 					events.append(ev)
 
 				else:
