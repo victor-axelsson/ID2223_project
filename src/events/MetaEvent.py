@@ -13,8 +13,11 @@ class MetaEvent:
 	def __repr__(self):
 		return "[MetaEvent, type: {}, length: {}, deltaTime: {}, data: {}]".format(self.type, self.length, self.deltaTime, self.data)
 
-	def printDataAsAscii(self):
+	def dataToAscii(self):
 		n = int(self.data, 2)
-		stringRep = n.to_bytes((n.bit_length() + 7) // 8, 'big').decode()
-		print(stringRep)
+		stringRep = n.to_bytes((n.bit_length() + 7) // 8, 'big').decode(encoding="utf-8", errors='ignore')
+		return stringRep
+
+	def printDataAsAscii(self):
+		print(self.dataToAscii())
 
