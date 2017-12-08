@@ -2,6 +2,7 @@
 python-midi
 src/__pycache__	
 .DS_Store
+tmp/
 
 # Below was auto-created by https://www.gitignore.io/api/python,pycharm+all,jupyternotebook
 
