@@ -14,7 +14,7 @@ class MetaEvent:
 		self.deltaTime = deltaTime
 
 	def __repr__(self):
-		return "[MetaEvent, textType: {}, type: {}, length: {}, deltaTime: {}, data: {}]".format(Events.Meta.fromType[self.type], self.type, self.length, self.deltaTime, self.data)
+		return "[MetaEvent, type: {}, length: {}, deltaTime: {}, data: {}]".format(hex(self.type), self.length, self.deltaTime, hex(self.data))
 
 	def dataToAscii(self):
 		n = int(self.data, 2)

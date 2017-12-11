@@ -8,7 +8,7 @@ class Events(object):
 	fromType = dict((v, k) for (k, v) in locals().items() if not str(k).startswith("__") )
 
 	class Meta(object):
-		Start = '1111'          # Meta events extend metaOMetaOrSysex with another F, as 0xFF
+		StartSeq = '1111'          # Meta events extend metaOMetaOrSysex with another F, as 0xFF
 		Text            = '00000001'
 		CopyrightNotice = '00000010'
 		TrackName       = '00000011'

@@ -12,10 +12,12 @@ class MidiParser:
 	filepath = None
 	headerChunk = None
 	tracks = None
+	rsBuf = None    # Running status buffer, handles skipped status bytes in Channel Voice events
 
-	def __init__(self, filepath):
+	def __init__(self, filepath, format=True):
 		self.filepath = filepath
-		self._format()
+		if format:
+			self._format()
 
 	def toInt(self, byte):
 		return int.from_bytes(byte, byteorder='big')
@@ -61,88 +63,98 @@ class MidiParser:
 		n = int('0b' + data, 2)
 		print(binascii.unhexlify('%x' % n))
 
-	def _formatTrack(self, binary_file):
+	# TODO move out to helpers, class-independent
+	def getBit(self, byte, idx):
+		return ((byte & (1 << idx)) >> idx)
+
+	def readBytes(self, n, byteArray, offset=0):
+		newOffset = offset + n
+		if newOffset > len(byteArray):
+			raise Exception("Requested bytes ({})exceed byteArray length {}".format(newOffset, len(byteArray)))
+		return int.from_bytes(byteArray[offset : newOffset], byteorder='big'), newOffset
+
+	def parseVaq(self, byteArray, offset=0):
+		dtbyte, offset = self.readBytes(1, byteArray, offset)
+		vaq = 0x00
+		while self.getBit(dtbyte, 7) == 1:
+			vaq = (vaq << 7) + (dtbyte & 0x7F)
+			dtbyte, offset = self.readBytes(1, byteArray, offset)
+		# Parse remaining
+		vaq = (vaq << 7) + (dtbyte & 0x7F)
+		deltaTime = int(vaq)
+		return (deltaTime, offset)
+
+	def _parseTrack(self, binary_file):
+		ofs = 0
 		# Parse the track data
 		chunkId = binary_file.read(4)
 		if not chunkId == b'MTrk':
 			print("WARN: Expected track chunk type to equal 'MTrk, got {}. Skipping...".format(chunkId))
 			# TODO parse through rest of record until next MTrk? Check dependencies in caller
 			return
-
 		chunkSize = self.toInt(binary_file.read(4))
 
+		eventDataBytes = bytearray(binary_file.read(chunkSize))
 		events = []
 
-		# Extract sequence of events from data
-		trackEventData = binary_file.read(chunkSize)
-		trackEventDataBinaryString = bin(int.from_bytes(trackEventData, byteorder="big")).strip('0b')
+		while (ofs < len(eventDataBytes)):
+			# Parse variable-length quantity for delta time
+			dt, ofs = self.parseVaq(eventDataBytes, ofs)
+			statusByte, ofs = self.readBytes(1, eventDataBytes, ofs)
 
-		deltaTime = 0
-		first = True
+			if 0xF0 <= statusByte and statusByte <= 0xF7:
+				# Clear the running status buffer; non-voice event received
+				self.rsBuf = None
 
-		while len(trackEventDataBinaryString) > 0:
+			if statusByte == 0xF0 or statusByte == 0xF7:
+				dataLength, ofs = self.parseVaq(eventDataBytes, ofs)
+				data, ofs = self.readBytes(dataLength, eventDataBytes, ofs)
 
+				print("SysEx event: length {}, data {}".format(dataLength, data))
+				ev = SystemExclusiveEvent(statusByte, dataLength, data, dt)
+				events.append(ev)
 
-			if not first:
-				# Parse # ticks since last event (can be 0)
-				deltaTime, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
-			d, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
-			#Check first 4 bits
-			if d == Events.MetaOrSysex:
-				d, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
+			elif statusByte == 0xFF:
+				metaType, ofs = self.readBytes(1, eventDataBytes, ofs)
+				dataLength, ofs = self.parseVaq(eventDataBytes, ofs)
+				data, ofs = self.readBytes(dataLength, eventDataBytes, ofs)
 
-				#Metadata events
-				if d == Events.Meta.Start:
-					type, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
-
-					#If you get a end of track, just exit
-					if type == Events.Meta.EndOfTrack:
-						events.append(EndOfTrack())
-						break
-
-					length, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
-					data, trackEventDataBinaryString = self.readBytes(length, trackEventDataBinaryString)
-
-					ev =  MetaEvent(type, length, data, deltaTime)
-					print("Processed MetaEvent: {}".format(ev))
-					events.append(ev)
-
-				else:
-					type = d
-					length, trackEventDataBinaryString = self.readVaq(trackEventDataBinaryString)
-					data, trackEventDataBinaryString = self.readBytes(length, trackEventDataBinaryString)
-
-					events.append(SystemExclusiveEvent(type, length, data, deltaTime))
-
+				print("Meta event: type {} with length {} and data {}".format(metaType, dataLength, data))
+				if metaType == 0x2f: # end of track
+					events.append(EndOfTrack())
+					break
+				ev = MetaEvent(metaType, dataLength, data, dt)
+				events.append(ev)
 			else:
-				# Parse channel message
-				type = d
-				channel, trackEventDataBinaryString = self.readBits(4, trackEventDataBinaryString)
+				print("Channel event with data={}".format(hex(statusByte)))
+				statusNibble = (statusByte >> 4)
+				channel = (statusByte & 0xFF) #TODO Currently unused
 
-				#Midi channel events C and D have length 1. The other have length 2
-				length = 2
-				param1, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
-				param2 = None
-				# TODO Could encode these lengths in event/message definitions
-				if type == Events.Channel.ProgramChange or type == Events.Channel.ChannelAftertouch:
-					length = 1
+				if 0x80 <= statusByte <= 0xEF:
+					# Buffer stores the statusByte when a Voice Category Status (ie, 0x80 to 0xEF) is received.
+					self.rsBuf = statusByte
 				else:
-					param2, trackEventDataBinaryString = self.readBytes(1, trackEventDataBinaryString)
-				print("Processed ChannelEvent: {}".format(Events.Channel.fromType[type]))
-				events.append(MidiChannelEvent(type, length, deltaTime, param1, param2))
+					print("Running statusByte detected on {} (with running status={})".format(statusByte, hex(self.rsBuf)))
+					# Reverse read so that byte can be used as param1
+					# self.rsBuf points to our correct status
+					ofs -= 1
 
-			first = False
+				param1, ofs = self.readBytes(1, eventDataBytes, ofs)
+				param2 = 0x00
+				if statusNibble == 0xC or statusNibble == 0xD:
+					dataLength = 1
+				else:
+					length = 2
+					dataLength, ofs = self.readBytes(1, eventDataBytes, ofs)
+
+				if self.rsBuf is not None:
+					# Ignore any events without a status, running or otherwise
+					print("Read data {}, {}".format(hex(param1), hex(param2)))
+					ev = MidiChannelEvent(self.rsBuf, dataLength, dt, param1, param2)
+					events.append(ev)
 
 		return TrackChunk(chunkId, chunkSize, events)
 
-	def readBits(self, nrOfBits, stream):
-		bits = stream[0:nrOfBits]
-		return (bits, stream[nrOfBits:])
-
-	def readBytes(self, nrOfBytes, stream):
-		nrOfBits = nrOfBytes * 8
-		bits = stream[0:nrOfBits]
-		return (bits, stream[nrOfBits:])
 
 	def _format(self):
 		with open(self.filepath, "rb") as binary_file:
@@ -157,7 +169,7 @@ class MidiParser:
 
 			#Grab all the tracks
 			for i in range(header.numberOfTracks):
-				track = self._formatTrack(binary_file)
+				track = self._parseTrack(binary_file)
 				self.tracks.append(track)
 				print("Track " + str(i + 1) + "/" + str(header.numberOfTracks))
 
