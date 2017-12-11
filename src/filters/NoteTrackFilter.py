@@ -45,9 +45,15 @@ class NoteTrackFilter:
 
 	def filterTrack(self, track):
 		events = []
+		deltaTime = 0
 		for event in track.events:
 			if event.type in self.keepEvents or ((event.type & 0xF0) >> 4) in self.keepEvents:
+				event.deltaTime += deltaTime
 				events.append(event)
+				deltaTime = 0
+			else:
+				#We need to keep track of missing delta times when we remove events
+				deltaTime += event.deltaTime
 
 		return events
 

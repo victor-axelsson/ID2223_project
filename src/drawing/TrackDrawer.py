@@ -12,7 +12,9 @@ class TrackDrawer:
 		# init canvas
 		im = Image.new('RGBA', canvas, (255, 255, 255, 255))
 		draw = ImageDraw.Draw(im)
-		#{'x': 27950880, 'y': 60, 'type': 144, 'track': 1}
+
+		# Example of a track
+		# {'x': 27950880, 'y': 60, 'type': 144, 'track': 1}
 		
 		for note in notes:
 			x1 = int(note['x'] / scale)
