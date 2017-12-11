@@ -13,9 +13,11 @@ class MidiParser:
 	headerChunk = None
 	tracks = None
 	rsBuf = None    # Running status buffer, handles skipped status bytes in Channel Voice events
+	verbose = None
 
-	def __init__(self, filepath, format=True):
+	def __init__(self, filepath, format=True, verbose=True):
 		self.filepath = filepath
+		self.verbose = verbose
 		if format:
 			self._format()
 
@@ -110,7 +112,8 @@ class MidiParser:
 				dataLength, ofs = self.parseVaq(eventDataBytes, ofs)
 				data, ofs = self.readBytes(dataLength, eventDataBytes, ofs)
 
-				print("SysEx event: length {}, data {}".format(dataLength, data))
+				if self.verbose:
+					print("SysEx event: length {}, data {}".format(dataLength, data))
 				ev = SystemExclusiveEvent(statusByte, dataLength, data, dt)
 				events.append(ev)
 
@@ -119,14 +122,16 @@ class MidiParser:
 				dataLength, ofs = self.parseVaq(eventDataBytes, ofs)
 				data, ofs = self.readBytes(dataLength, eventDataBytes, ofs)
 
-				print("Meta event: type {} with length {} and data {}".format(metaType, dataLength, data))
+				if self.verbose:
+					print("Meta event: type {} with length {} and data {}".format(metaType, dataLength, data))
 				if metaType == 0x2f: # end of track
 					events.append(EndOfTrack())
 					break
 				ev = MetaEvent(metaType, dataLength, data, dt)
 				events.append(ev)
 			else:
-				print("Channel event with data={}".format(hex(statusByte)))
+				if self.verbose:
+					print("Channel event with data={}".format(hex(statusByte)))
 				statusNibble = (statusByte >> 4)
 				channel = (statusByte & 0xFF) #TODO Currently unused
 
@@ -134,7 +139,8 @@ class MidiParser:
 					# Buffer stores the statusByte when a Voice Category Status (ie, 0x80 to 0xEF) is received.
 					self.rsBuf = statusByte
 				else:
-					print("Running statusByte detected on {} (with running status={})".format(statusByte, hex(self.rsBuf)))
+					if self.verbose:
+						print("Running statusByte detected on {} (with running status={})".format(statusByte, hex(self.rsBuf)))
 					# Reverse read so that byte can be used as param1
 					# self.rsBuf points to our correct status
 					ofs -= 1
@@ -149,7 +155,8 @@ class MidiParser:
 
 				if self.rsBuf is not None:
 					# Ignore any events without a status, running or otherwise
-					print("Read data {}, {}".format(hex(param1), hex(param2)))
+					if self.verbose:
+						print("Read data {}, {}".format(hex(param1), hex(param2)))
 					ev = MidiChannelEvent(self.rsBuf, dataLength, dt, param1, param2)
 					events.append(ev)
 
@@ -163,15 +170,16 @@ class MidiParser:
 			binary_file.seek(0)  # Go to beginning
 
 			#Grab the header of the file
-			header = self._formatHeader(binary_file)
+			self.headerChunk = self._formatHeader(binary_file)
 
 			self.tracks = []
 
 			#Grab all the tracks
-			for i in range(header.numberOfTracks):
+			for i in range(self.headerChunk.numberOfTracks):
 				track = self._parseTrack(binary_file)
 				self.tracks.append(track)
-				print("Track " + str(i + 1) + "/" + str(header.numberOfTracks))
+				if self.verbose:
+					print("Track " + str(i + 1) + "/" + str(self.headerChunk.numberOfTracks))
 
 
 

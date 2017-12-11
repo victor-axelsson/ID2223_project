@@ -1,6 +1,6 @@
 import os
 import sys
-
+from src.filters.NoteTrackFilter import NoteTrackFilter
 
 def parsePath(args):
 	scriptDir = os.path.dirname(os.path.abspath(__file__))
@@ -12,5 +12,8 @@ def parsePath(args):
 if __name__ == '__main__':
 	from src.midiParser import *
 
-	parser = MidiParser(parsePath(sys.argv))
-	print(str(parser.tracks))
+	parser = MidiParser(parsePath(sys.argv), verbose=False)
+	
+	trackFilter = NoteTrackFilter(parser)
+
+	#print(str(parser.tracks))
