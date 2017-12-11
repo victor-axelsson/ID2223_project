@@ -26,16 +26,15 @@ class NoteTrackFilter:
 		self.timeDivision = parser.headerChunk.timeDivision
 		self.setTimeDivision()
 		self.filterTracks()
-		
 
 	def setTimeDivision(self):
 		if self.timeDivision & 0x8000 == 0x8000:
-			isTypeOne = False
+			self.isTypeOne = False
 			self.nrOfSMPTEFrames = (self.timeDivision & 0x7F00) >> 4
 			self.clockTicksPerFrame = self.timeDivision & 0x00FF
 			print("Frames per second [ATTENTION, NOT YET PROPERLY TESTED]")
 		else:
-			isTypeOne = True
+			self.isTypeOne = True
 			print("Ticks per beat")
 			self.ticksPerBeat = self.timeDivision & 0x7FFF
 
@@ -45,12 +44,11 @@ class NoteTrackFilter:
 			self.tracks.append(self.filterTrack(track))
 
 	def filterTrack(self, track):
-		print("here")
-
 		events = []
 		for event in track.events:
 			if event.type in self.keepEvents or ((event.type & 0xF0) >> 4) in self.keepEvents:
 				events.append(event)
 
 		return events
+
 

@@ -4,6 +4,8 @@ src/__pycache__
 .DS_Store
 tmp/
 
+track*.png
+
 # Below was auto-created by https://www.gitignore.io/api/python,pycharm+all,jupyternotebook
 
 ### JupyterNotebook ###
