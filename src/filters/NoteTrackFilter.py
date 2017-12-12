@@ -37,6 +37,7 @@ class NoteTrackFilter:
 			self.isTypeOne = True
 			print("Ticks per beat")
 			self.ticksPerBeat = self.timeDivision & 0x7FFF
+			print(self.ticksPerBeat)
 
 	def filterTracks(self):
 		self.tracks = []
@@ -47,10 +48,19 @@ class NoteTrackFilter:
 		events = []
 		deltaTime = 0
 		for event in track.events:
+			print(event)
 			if event.type in self.keepEvents or ((event.type & 0xF0) >> 4) in self.keepEvents:
-				event.deltaTime += deltaTime
-				events.append(event)
-				deltaTime = 0
+
+				if event.length > 0:
+					event.deltaTime += deltaTime
+					events.append(event)
+					deltaTime = 0
+				else:
+					#Flip it to a note off value
+					event.type = event.type ^ 0b00010000
+					event.deltaTime += deltaTime
+					events.append(event)
+					deltaTime = 0
 			else:
 				#We need to keep track of missing delta times when we remove events
 				deltaTime += event.deltaTime

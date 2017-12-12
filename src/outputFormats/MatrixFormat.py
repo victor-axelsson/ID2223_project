@@ -19,13 +19,17 @@ class MatrixFormat:
 	def parseTypeOne(self):
 		trackCounter = 0
 		maxCursor = 0; 
+		files = []
 		for track in self.trackFilter.tracks:	
 			#print(track)
 			notes, cursor = self.parseTrack(track, trackCounter)
 			maxCursor = max(cursor, maxCursor)
 			trackCounter += 1
 			if len(notes) > 0:
-				self.drawer.drawTrack(notes, maxCursor)
+				files.append(self.drawer.drawTrack(notes, maxCursor))
+
+		self.drawer.mergeTracks(files)
+
 
 	def isOfType(self, value, typeVal):
 		return value == typeVal or ((value & (typeVal << 4)) >> 4) == typeVal
@@ -36,7 +40,9 @@ class MatrixFormat:
 
 		for event in track:
 			#print(event.type)
-			cursor = cursor + (event.deltaTime * self.trackFilter.ticksPerBeat)
+
+
+			cursor = cursor + ((event.deltaTime / self.trackFilter.ticksPerBeat) * 16)
 
 			if self.isOfType(event.type, 0x9) or self.isOfType(event.type, 0x8):
 				notes.append({
