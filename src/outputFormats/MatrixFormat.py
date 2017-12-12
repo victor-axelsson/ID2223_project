@@ -1,13 +1,15 @@
 from src.drawing.TrackDrawer import TrackDrawer
+from src.events.MidiChannelEvent import MidiChannelEvent
+import inspect
 
 class MatrixFormat:
 
 	trackFilter = None
 	drawer = None
 
-	def __init__(self, trackFilter):
+	def __init__(self, trackFilter, drawer):
 		self.trackFilter = trackFilter
-		self.drawer = TrackDrawer()
+		self.drawer = drawer
 		self.parseToMatrix()
 
 	def parseToMatrix(self):
@@ -28,7 +30,8 @@ class MatrixFormat:
 			if len(notes) > 0:
 				files.append(self.drawer.drawTrack(notes, maxCursor))
 
-		self.drawer.mergeTracks(files)
+		if len(files) > 0:
+			self.drawer.mergeTracks(files)
 
 
 	def isOfType(self, value, typeVal):
@@ -38,18 +41,22 @@ class MatrixFormat:
 		cursor = 0
 		notes = []
 
-		for event in track:
-			#print(event.type)
+		if self.trackFilter.ticksPerBeat > 0:
+			for event in track:
+				#print(event.type)
 
 
-			cursor = cursor + ((event.deltaTime / self.trackFilter.ticksPerBeat) * 16)
+				cursor = cursor + ((event.deltaTime / self.trackFilter.ticksPerBeat) * 16)
 
-			if self.isOfType(event.type, 0x9) or self.isOfType(event.type, 0x8):
-				notes.append({
-					'x': cursor,
-					'y': event.param1,
-					'type': event.type,
-					'track': trackCounter
-				})
+				if self.isOfType(event.type, 0x9) or self.isOfType(event.type, 0x8):
+					if isinstance(event, MidiChannelEvent):
+						notes.append({
+							'x': cursor,
+							'y': event.param1,
+							'type': event.type,
+							'track': trackCounter
+						})
+					else:
+						print("There is some bug here. This class should not have this type")
 
 		return notes, cursor

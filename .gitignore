@@ -4,7 +4,10 @@ src/__pycache__
 .DS_Store
 tmp/
 
+midi_images
+midi_files
 track*.png
+midi_images.zip
 
 # Below was auto-created by https://www.gitignore.io/api/python,pycharm+all,jupyternotebook
 

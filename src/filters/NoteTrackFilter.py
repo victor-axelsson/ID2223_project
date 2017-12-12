@@ -32,12 +32,11 @@ class NoteTrackFilter:
 			self.isTypeOne = False
 			self.nrOfSMPTEFrames = (self.timeDivision & 0x7F00) >> 4
 			self.clockTicksPerFrame = self.timeDivision & 0x00FF
-			print("Frames per second [ATTENTION, NOT YET PROPERLY TESTED]")
+			#print("Frames per second [ATTENTION, NOT YET PROPERLY TESTED]")
+			raise Exception("Frames per second is not yet implemented")
 		else:
 			self.isTypeOne = True
-			print("Ticks per beat")
 			self.ticksPerBeat = self.timeDivision & 0x7FFF
-			print(self.ticksPerBeat)
 
 	def filterTracks(self):
 		self.tracks = []
@@ -48,7 +47,7 @@ class NoteTrackFilter:
 		events = []
 		deltaTime = 0
 		for event in track.events:
-			print(event)
+			#print(event)
 			if event.type in self.keepEvents or ((event.type & 0xF0) >> 4) in self.keepEvents:
 
 				if event.length > 0:

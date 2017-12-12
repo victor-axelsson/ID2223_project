@@ -2,6 +2,13 @@ from PIL import Image, ImageDraw
 
 class TrackDrawer:
 
+	folder = None
+	name = None
+
+	def __init__(self, folder, name):
+		self.folder = folder
+		self.name = name
+
 	def isOfType(self, value, type):
 		return value == type or ((value & 0xF0) >> 4) == type
 
@@ -25,14 +32,14 @@ class TrackDrawer:
 		for note in notes:
 			if self.isOfType(note['type'], 0x9):
 				x1 = int(note['x'] / scale)
-				y1 = height - note['y']
 			elif self.isOfType(note['type'], 0x8):
+				y1 = height - note['y']
 				x2 = int(note['x'] / scale)
 				y2 = y1 +1
 				draw.rectangle([x1, y1, x2, y2], outline=(0, 0, 0, 255))
 
 
-		filename = '/Users/victoraxelsson/Desktop/data_projects/ML_project/track'+str(note['track'])+'.png'
+		filename = self.folder + self.name + '_track[' + str(note['track']) + '].png'
 		im.save(filename)
 
 		return filename
@@ -44,7 +51,7 @@ class TrackDrawer:
 			foreground = Image.open(files[i])
 			background.paste(foreground, (0, 0), foreground)
 
-		filename = '/Users/victoraxelsson/Desktop/data_projects/ML_project/track.png'
+		filename =  self.folder + self.name + "_track_all" + '.png'
 		background.save(filename)
 
 		return filename

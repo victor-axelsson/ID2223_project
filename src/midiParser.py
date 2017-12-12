@@ -71,8 +71,13 @@ class MidiParser:
 
 	def readBytes(self, n, byteArray, offset=0):
 		newOffset = offset + n
+		'''
 		if newOffset > len(byteArray):
 			raise Exception("Requested bytes ({})exceed byteArray length {}".format(newOffset, len(byteArray)))
+			'''
+		if newOffset > len(byteArray):
+			newOffset = len(byteArray)
+
 		return int.from_bytes(byteArray[offset : newOffset], byteorder='big'), newOffset
 
 	def parseVaq(self, byteArray, offset=0):
@@ -177,9 +182,10 @@ class MidiParser:
 			#Grab all the tracks
 			for i in range(self.headerChunk.numberOfTracks):
 				track = self._parseTrack(binary_file)
-				self.tracks.append(track)
-				if self.verbose:
-					print("Track " + str(i + 1) + "/" + str(self.headerChunk.numberOfTracks))
+				if track != None:
+					self.tracks.append(track)
+					if self.verbose:
+						print("Track " + str(i + 1) + "/" + str(self.headerChunk.numberOfTracks))
 
 
 
