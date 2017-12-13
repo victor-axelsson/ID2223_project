@@ -1,4 +1,5 @@
 from PIL import Image, ImageDraw
+from pilkit.utils import save_image
 
 class TrackDrawer:
 
@@ -19,6 +20,10 @@ class TrackDrawer:
 		height = 128
 
 		canvas = (w, height)
+		if(w > 2147483647):
+			print("Here is seems like we have a very big canvas")
+			print(w)
+
 		# init canvas
 		im = Image.new('RGBA', canvas, (255, 255, 255, 0))
 		draw = ImageDraw.Draw(im)
@@ -40,7 +45,8 @@ class TrackDrawer:
 
 
 		filename = self.folder + self.name + '_track[' + str(note['track']) + '].png'
-		im.save(filename)
+		save_image(im, filename, 'PNG', options={}, autoconvert=True)
+		#im.save(filename)
 
 		return filename
 
@@ -52,6 +58,7 @@ class TrackDrawer:
 			background.paste(foreground, (0, 0), foreground)
 
 		filename =  self.folder + self.name + "_track_all" + '.png'
-		background.save(filename)
+		save_image(background, filename, 'PNG', options={}, autoconvert=True)
+		#background.save(filename)
 
 		return filename
