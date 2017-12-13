@@ -28,7 +28,7 @@ class MatrixFormat:
 			maxCursor = max(cursor, maxCursor)
 			trackCounter += 1
 			if len(notes) > 0:
-				files.append(self.drawer.drawTrack(notes, maxCursor))
+				files = files + self.drawer.drawTrack(notes, maxCursor)
 
 		if len(files) > 0:
 			self.drawer.mergeTracks(files)

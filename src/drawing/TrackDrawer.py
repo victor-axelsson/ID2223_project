@@ -1,10 +1,12 @@
 from PIL import Image, ImageDraw
 from pilkit.utils import save_image
+import math
 
 class TrackDrawer:
 
 	folder = None
 	name = None
+	SIZE_OF_INT = 2147483647
 
 	def __init__(self, folder, name):
 		self.folder = folder
@@ -19,36 +21,39 @@ class TrackDrawer:
 		w = int(width / scale)
 		height = 128
 
-		canvas = (w, height)
-		if(w > 2147483647):
-			print("Here is seems like we have a very big canvas")
-			print(w)
+		nrOfCanvases = math.ceil(w / self.SIZE_OF_INT)
+		w = int(w / nrOfCanvases)
 
-		# init canvas
-		im = Image.new('RGBA', canvas, (255, 255, 255, 0))
-		draw = ImageDraw.Draw(im)
+		filenames = []
+		for i in range(0, nrOfCanvases):
 
-		# Example of a track
-		# {'x': 27950880, 'y': 60, 'type': 144, 'track': 1}
-		
-		x1 = 0
-		x2 = 0
+			canvas = (w, height)
 
-		for note in notes:
-			if self.isOfType(note['type'], 0x9):
-				x1 = int(note['x'] / scale)
-			elif self.isOfType(note['type'], 0x8):
-				y1 = height - note['y']
-				x2 = int(note['x'] / scale)
-				y2 = y1 +1
-				draw.rectangle([x1, y1, x2, y2], outline=(0, 0, 0, 255))
+			# init canvas
+			im = Image.new('RGBA', canvas, (255, 255, 255, 0))
+			draw = ImageDraw.Draw(im)
 
+			# Example of a track
+			# {'x': 27950880, 'y': 60, 'type': 144, 'track': 1}
+			
+			x1 = 0
+			x2 = 0
 
-		filename = self.folder + self.name + '_track[' + str(note['track']) + '].png'
-		save_image(im, filename, 'PNG', options={}, autoconvert=True)
-		#im.save(filename)
+			for note in notes:
+				if self.isOfType(note['type'], 0x9):
+					x1 = int(note['x'] - (i * nrOfCanvases) / scale)
+				elif self.isOfType(note['type'], 0x8):
+					y1 = height - note['y']
+					x2 = int(note['x'] - (i * nrOfCanvases) / scale)
+					y2 = y1 +1
+					draw.rectangle([x1, y1, x2, y2], outline=(0, 0, 0, 255))
 
-		return filename
+			filename = self.folder + self.name + '_track[' + str(note['track']) + '-' + str(i)+'_'+str(nrOfCanvases -1) + '].png'
+			##save_image(im, filename, 'PNG', options={}, autoconvert=True)
+			im.save(filename)
+			filenames.append(filename)
+
+		return filenames
 
 	def mergeTracks(self, files):
 		background = Image.open(files[0])
