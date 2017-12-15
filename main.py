@@ -3,6 +3,7 @@ import sys
 from src.filters.NoteTrackFilter import NoteTrackFilter
 from src.outputFormats.MatrixFormat import MatrixFormat
 from src.drawing.TrackDrawer import TrackDrawer
+from src.drawing.TextFormat import TextFormat
 import glob
 import datetime
 
@@ -18,7 +19,7 @@ def getFiles():
 	files = []
 	counter = 0
 	for filename in glob.iglob('midi_files/**/*.mid', recursive=True):
-		saveFilepath = '/'.join(filename.replace("midi_files", "midi_images").split("/")[:-1]) + "/"
+		saveFilepath = '/'.join(filename.replace("midi_files", "midi_text").split("/")[:-1]) + "/"
 		name = filename.split("/")[-1].replace(".mid", "")
 		files.append({
 			'saveFilepath': saveFilepath,
@@ -44,7 +45,7 @@ if __name__ == '__main__':
 
 	#filename = 'midi_files/9/911.mid'
 
-		saveFilepath = '/'.join(filename.replace("midi_files", "midi_images").split("/")[:-1]) + "/"
+		saveFilepath = '/'.join(filename.replace("midi_files", "midi_text").split("/")[:-1]) + "/"
 		name = filename.split("/")[-1].replace(".mid", "")
 		message = "[" + str(datetime.datetime.now().time()) + "] PARSING => " + str(counter) + "/" + str(total) + " " + str(counter/total * 100) + "%" + " FILE => " + saveFilepath + name
 		print(message)
@@ -54,7 +55,8 @@ if __name__ == '__main__':
 
 		parser = MidiParser(filename, verbose=False)
 		trackFilter = NoteTrackFilter(parser)
-		drawer = TrackDrawer(saveFilepath, name)
+		drawer = TextFormat(saveFilepath, name)
+		#drawer = TrackDrawer(saveFilepath, name)
 		formatter = MatrixFormat(trackFilter, drawer)
 
 		counter += 1

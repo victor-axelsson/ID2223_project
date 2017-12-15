@@ -8,6 +8,7 @@ midi_images
 midi_files
 track*.png
 midi_images.zip
+midi_text
 
 # Below was auto-created by https://www.gitignore.io/api/python,pycharm+all,jupyternotebook
 
