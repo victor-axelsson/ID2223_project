@@ -48,7 +48,7 @@ class MatrixFormat:
 				#print(event.type)
 
 
-				cursor = cursor + ((event.deltaTime / self.trackFilter.ticksPerBeat) * 16)
+				cursor = cursor + round((event.deltaTime / self.trackFilter.ticksPerBeat) * 16)
 
 				if self.isOfType(event.type, 0x9) or self.isOfType(event.type, 0x8):
 					if isinstance(event, MidiChannelEvent):

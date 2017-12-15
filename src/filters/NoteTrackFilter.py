@@ -27,6 +27,9 @@ class NoteTrackFilter:
 		self.setTimeDivision()
 		self.filterTracks()
 
+	def isOfType(self, value, typeVal):
+		return value == typeVal or ((value & (typeVal << 4)) >> 4) == typeVal
+
 	def setTimeDivision(self):
 		if self.timeDivision & 0x8000 == 0x8000:
 			self.isTypeOne = False
@@ -50,13 +53,18 @@ class NoteTrackFilter:
 			#print(event)
 			if event.type in self.keepEvents or ((event.type & 0xF0) >> 4) in self.keepEvents:
 
-				if event.length > 0:
-					event.deltaTime += deltaTime
-					events.append(event)
-					deltaTime = 0
+				if self.isOfType(event.type, 0x9):
+					if event.length > 0:
+						event.deltaTime += deltaTime
+						events.append(event)
+						deltaTime = 0
+					else:
+						#Flip it to a note off value
+						event.type = event.type ^ 0b00010000
+						event.deltaTime += deltaTime
+						events.append(event)
+						deltaTime = 0
 				else:
-					#Flip it to a note off value
-					event.type = event.type ^ 0b00010000
 					event.deltaTime += deltaTime
 					events.append(event)
 					deltaTime = 0
@@ -65,5 +73,3 @@ class NoteTrackFilter:
 				deltaTime += event.deltaTime
 
 		return events
-
-
