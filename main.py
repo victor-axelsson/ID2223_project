@@ -32,19 +32,23 @@ if __name__ == '__main__':
 	from src.midiParser import *
 
 	print("Getting the file count...")
+	folder = "midi_files_partitioned/" + sys.argv[1]
+	
+
 	total = 0
-	for root, dirs, files in os.walk("midi_files"):
+	for root, dirs, files in os.walk(folder):
 		total += len(files)
 
 	print("Total: " + str(total))
 
 
 	counter = 0
-	for filename in glob.iglob('midi_files/**/*.mid', recursive=True):
+	for filename in glob.iglob( folder +'/**/*.mid', recursive=True):
 
+		print(filename)
 	#filename = 'midi_files/9/911.mid'
 
-		saveFilepath = '/'.join(filename.replace("midi_files", "midi_images").split("/")[:-1]) + "/"
+		saveFilepath = '/'.join(filename.replace(folder, "midi_images").split("/")[:-1]) + "/"
 		name = filename.split("/")[-1].replace(".mid", "")
 		message = "[" + str(datetime.datetime.now().time()) + "] PARSING => " + str(counter) + "/" + str(total) + " " + str(counter/total * 100) + "%" + " FILE => " + saveFilepath + name
 		print(message)
@@ -58,4 +62,4 @@ if __name__ == '__main__':
 		formatter = MatrixFormat(trackFilter, drawer)
 
 		counter += 1
-		
+		sys.stdout.flush()
