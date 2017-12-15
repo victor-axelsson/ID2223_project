@@ -19,7 +19,44 @@ class TextFormat:
 		noteText = ""
 
 		for note in notes:
+
 			increment = int(note['x']) - cursor
+			if note['track'] == 3:
+				print(note)
+				print(stack)
+				#print(increment)
+
+			stackText = ""
+			for n in stack:
+				stackText += self.valToChar(n['y'])
+
+			for i in range(0, increment):
+					trackString += " " + stackText
+
+			if self.isOfType(note['type'], 0x9):
+				#Note on
+				#trackString += self.valToChar(note['y'])
+				stack.append(note)
+			elif self.isOfType(note['type'], 0x8):
+				#Note off
+				#trackString += ""
+
+				newStack = []
+				for i in range(0, len(stack)):
+					if stack[i]['y'] != note['y']:
+						newStack.append(stack[i])
+				stack = newStack
+
+			'''
+			if increment > 0:
+				stackText = ""
+				for n in stack:
+					stackText += self.valToChar(n['y'])
+
+				trackString += " " + stackText
+
+			'''
+			'''
 
 			if note['track'] == 1:
 				print(note)
@@ -43,7 +80,7 @@ class TextFormat:
 					if stack[i]['y'] == note['y']:
 						del stack[i]
 						break
-
+			'''
 			'''
 			#Print the stack
 			if increment > 0:
