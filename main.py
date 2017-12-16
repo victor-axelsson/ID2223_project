@@ -1,9 +1,9 @@
 import os
 import sys
 from src.filters.NoteTrackFilter import NoteTrackFilter
-from src.outputFormats.MatrixFormat import MatrixFormat
-from src.drawing.TrackDrawer import TrackDrawer
-from src.drawing.TextFormat import TextFormat
+from src.timeInterpreters.AbsoluteOffsetParser import AbsoluteOffsetParser
+from src.outputFormats.ImageFormat import ImageFormat
+from src.outputFormats.TextFormat import TextFormat
 import glob
 import datetime
 
@@ -33,37 +33,42 @@ if __name__ == '__main__':
 	from src.midiParser import *
 
 	print("Getting the file count...")
-	folder = "midi_files_partitioned/" + sys.argv[1]
-	
+	inputFolder = "midi_files_partitioned/" + sys.argv[1]
+	outputFolder = "midi_text"
+
 
 	total = 0
-	for root, dirs, files in os.walk(folder):
+	for root, dirs, files in os.walk(inputFolder):
 		total += len(files)
 
 	print("Total: " + str(total))
 
 
 	counter = 0
-	#for filename in glob.iglob( folder +'/**/*.mid', recursive=True):
+	for filename in glob.iglob( inputFolder +'/**/*.mid', recursive=True):
 
-	
-	filename = 'midi_files/9/911.mid'
-	print(filename)
+		#filename = 'midi_files/9/911.mid'
+		print(filename)
 
-	saveFilepath = '/'.join(filename.replace("midi_files", "midi_text").split("/")[:-1]) + "/"
-	name = filename.split("/")[-1].replace(".mid", "")
-	message = "[" + str(datetime.datetime.now().time()) + "] PARSING => " + str(counter) + "/" + str(total) + " " + str(counter/total * 100) + "%" + " FILE => " + saveFilepath + name
-	print(message)
-	print(saveFilepath)
-	
-	if not os.path.exists(saveFilepath):
-		os.makedirs(saveFilepath)
+		saveFilepath = '/'.join(filename.replace(inputFolder, outputFolder).split("/")[:-1]) + "/"
+		name = filename.split("/")[-1].replace(".mid", "")
+		message = "[" + str(datetime.datetime.now().time()) + "] PARSING => " + str(counter) + "/" + str(total) + " " + str(counter/total * 100) + "%" + " FILE => " + saveFilepath + name
+		print(message)
+		print(saveFilepath)
+		
+		if not os.path.exists(saveFilepath):
+			os.makedirs(saveFilepath)
 
-	parser = MidiParser(filename, verbose=False)
-	trackFilter = NoteTrackFilter(parser)
-	drawer = TextFormat(saveFilepath, name)
-	#drawer = TrackDrawer(saveFilepath, name)
-	formatter = MatrixFormat(trackFilter, drawer)
+		parser = MidiParser(filename, verbose=False)
+		trackFilter = NoteTrackFilter(parser)
 
-	counter += 1
-	sys.stdout.flush()
+		#Only parse type one
+		if trackFilter.isTypeOne:
+			drawer = TextFormat(saveFilepath, name)
+			#drawer = ImageFormat(saveFilepath, name)
+			formatter = AbsoluteOffsetParser(trackFilter, drawer)
+		else:
+			print("Skipping type 2 format")
+
+		counter += 1
+		sys.stdout.flush()

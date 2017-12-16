@@ -1,8 +1,7 @@
-from src.drawing.TrackDrawer import TrackDrawer
 from src.events.MidiChannelEvent import MidiChannelEvent
 import inspect
 
-class MatrixFormat:
+class AbsoluteOffsetParser:
 
 	trackFilter = None
 	drawer = None
@@ -10,13 +9,14 @@ class MatrixFormat:
 	def __init__(self, trackFilter, drawer):
 		self.trackFilter = trackFilter
 		self.drawer = drawer
-		self.parseToMatrix()
+		self.parseToAbsoluteOffset()
 
-	def parseToMatrix(self):
+	def parseToAbsoluteOffset(self):
 		if self.trackFilter.isTypeOne:
 			self.parseTypeOne()
 		else:
-			raise Exception("The type two time format is not yet implemented")
+			#raise Exception("The type two time format is not yet implemented")
+			print("The type two time format is not yet implemented [SKIPPING]")
 
 	def parseTypeOne(self):
 		trackCounter = 0
@@ -28,7 +28,7 @@ class MatrixFormat:
 			maxCursor = max(cursor, maxCursor)
 			trackCounter += 1
 			if len(notes) > 0:
-				file = self.drawer.drawTrack(notes, maxCursor)
+				file = self.drawer.createTrack(notes, maxCursor)
 				if file != None:
 					files.append(file)
 

@@ -10,7 +10,7 @@ class TextFormat:
 	def valToChar(self, val):
 		return chr(val)
 
-	def drawTrack(self, notes, width):
+	def createTrack(self, notes, width):
 
 		cursor = 0
 		trackString = ""
@@ -53,7 +53,7 @@ class TextFormat:
 		for file in files:
 			with open(file, 'r') as f:
 				track = f.read()
-				longestTrack = max(longestTrack, len(track))
+				longestTrack = max(longestTrack, len(track) + 1)
 				tracks.append(track)
 				
 		allTracks = [""] * longestTrack

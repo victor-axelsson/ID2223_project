@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw
 from pilkit.utils import save_image
 import math
 
-class TrackDrawer:
+class ImageFormat:
 
 	folder = None
 	name = None
@@ -15,7 +15,7 @@ class TrackDrawer:
 	def isOfType(self, value, type):
 		return value == type or ((value & 0xF0) >> 4) == type
 
-	def drawTrack(self, notes, width):
+	def createTrack(self, notes, width):
 		
 		scale = 1
 		w = int(width / scale)
@@ -47,7 +47,6 @@ class TrackDrawer:
 				draw.rectangle([x1, y1, x2, y2], outline=(0, 0, 0, 255))
 
 		filename = self.folder + self.name + '_track[' + str(note['track']) + '].png'
-		##save_image(im, filename, 'PNG', options={}, autoconvert=True)
 		im.save(filename)
 
 		return filename
@@ -60,7 +59,6 @@ class TrackDrawer:
 			background.paste(foreground, (0, 0), foreground)
 
 		filename =  self.folder + self.name + "_track_all" + '.png'
-		save_image(background, filename, 'PNG', options={}, autoconvert=True)
-		#background.save(filename)
+		background.save(filename)
 
 		return filename

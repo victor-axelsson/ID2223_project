@@ -36,7 +36,7 @@ class NoteTrackFilter:
 			self.nrOfSMPTEFrames = (self.timeDivision & 0x7F00) >> 4
 			self.clockTicksPerFrame = self.timeDivision & 0x00FF
 			#print("Frames per second [ATTENTION, NOT YET PROPERLY TESTED]")
-			raise Exception("Frames per second is not yet implemented")
+			#raise Exception("Frames per second is not yet implemented")
 		else:
 			self.isTypeOne = True
 			self.ticksPerBeat = self.timeDivision & 0x7FFF
