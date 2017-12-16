@@ -14,122 +14,30 @@ class TextFormat:
 
 		cursor = 0
 		trackString = ""
-		stack = []
+		stack = {}
 		stackText = ""
-		noteText = ""
 
 		for note in notes:
 
 			increment = int(note['x']) - cursor
-			if note['track'] == 3:
-				print(note)
-				print(stack)
-				#print(increment)
 
 			stackText = ""
 			for n in stack:
-				stackText += self.valToChar(n['y'])
+				stackText += self.valToChar(n)
 
 			for i in range(0, increment):
 					trackString += " " + stackText
 
 			if self.isOfType(note['type'], 0x9):
 				#Note on
-				#trackString += self.valToChar(note['y'])
-				stack.append(note)
+				stack[note['y']] = note
 			elif self.isOfType(note['type'], 0x8):
 				#Note off
-				#trackString += ""
-
-				newStack = []
-				for i in range(0, len(stack)):
-					if stack[i]['y'] != note['y']:
-						newStack.append(stack[i])
-				stack = newStack
-
-			'''
-			if increment > 0:
-				stackText = ""
-				for n in stack:
-					stackText += self.valToChar(n['y'])
-
-				trackString += " " + stackText
-
-			'''
-			'''
-
-			if note['track'] == 1:
-				print(note)
-
-			if increment > 0 and len(stack) == 0:
-				for i in range(0, increment):
-					trackString += "* "
-			elif increment > 0 and len(stack) > 0:
-				trackString += " "
-				for i in range(0, increment -1):
-					trackString += "- "
-
-			if self.isOfType(note['type'], 0x9):
-				#Note on
-				trackString += self.valToChar(note['y'])
-				stack.append(note)
-			elif self.isOfType(note['type'], 0x8):
-				#Note off
-				trackString += ""
-				for i in range(0, len(stack)):
-					if stack[i]['y'] == note['y']:
-						del stack[i]
-						break
-			'''
-			'''
-			#Print the stack
-			if increment > 0:
-				for i in range(0, increment):
-					trackString += " " + stackText
-			'''
-
-			'''
-			#Add note to stack
-			if self.isOfType(note['type'], 0x9):
-				# Note on
-				stack.append(note)
-				noteText = self.valToChar(note['y'])
-
-			elif self.isOfType(note['type'], 0x8):
-				#Note off
-				for i in range(0, len(stack)):
-					if stack[i]['y'] == note['y']:
-						del stack[i]
-						break
-
-			#Build the new stack text
-			stackText = ""
-			for n in stack:
-				stackText += self.valToChar(n['y'])
-
-			#Add the stack
-			if increment > 0:
-				trackString += " " + stackText
-			else:
-				trackString += stackText
-
-			'''
+				if note['y'] in stack:
+					stack.pop(note['y'])
 
 			#move the cursor
 			cursor += increment
-
-
-
-			'''
-			if increment > 0:
-				for i in range(0, increment):
-					trackString += " "
-
-					for n in stack:
-						trackString += self.valToChar(n['y'])
-
-				cursor += increment
-			'''
 
 		filename = self.folder + self.name + '_track[' + str(note['track']) + '].txt'
 		with open(filename, 'w+') as f:
@@ -139,10 +47,25 @@ class TextFormat:
 
 	def mergeTracks(self, files):
 
-		allTracks = ""
+		
+		longestTrack = 0
+		tracks = []
 		for file in files:
 			with open(file, 'r') as f:
-				allTracks += f.read() + "\n"
+				track = f.read()
+				longestTrack = max(longestTrack, len(track))
+				tracks.append(track)
+				
+		allTracks = [""] * longestTrack
+
+		for track in tracks:
+			pts = track.split(" ")
+
+			for i in range(0, len(pts)):
+				allTracks[i] += pts[i]
+
+
+		allTracks = " ".join(allTracks)
 
 		filename =  self.folder + self.name + "_track_all" + '.txt'
 
