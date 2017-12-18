@@ -19,3 +19,7 @@ class HeaderChunk:
 		print("formatType =>" + str(self.formatType))
 		print("numberOfTracks =>" + str(self.numberOfTracks))
 		print("timeDivision =>" + str(self.timeDivision))
+
+	def parseToString(self):
+		content = ""
+		

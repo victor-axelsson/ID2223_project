@@ -1,5 +1,4 @@
 from PIL import Image, ImageDraw
-from pilkit.utils import save_image
 import math
 
 class ImageFormat:

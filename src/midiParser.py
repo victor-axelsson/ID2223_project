@@ -6,6 +6,7 @@ from src.events.MetaEvent import MetaEvent
 from src.events.SystemExclusiveEvent import SystemExclusiveEvent
 from src.events.MidiChannelEvent import MidiChannelEvent
 import binascii
+from binascii import unhexlify
 
 class MidiParser:
 
@@ -91,6 +92,40 @@ class MidiParser:
 		deltaTime = int(vaq)
 		return (deltaTime, offset)
 
+	def vaqToString(self, intVal):
+		intVal = int(intVal)
+		strVal = "{0:b}".format(intVal)
+		missingZeros = 0
+
+		if len(strVal) % 8 > 0:
+			missingZeros = 8 - (len(strVal) % 8)
+
+		#Padd out missing zeros
+		for i in range(0, missingZeros):
+			strVal = "0" + strVal 
+
+		counter = len(strVal) -1
+		vaq = ""
+		while(counter >= 0):
+			
+			i = len(strVal) - counter -1
+
+			if i % 7 == 0 and i > 0:
+				if i <= 8:
+					vaq =  strVal[counter] + "0" + vaq
+				else:
+					vaq =  strVal[counter] + "1" + vaq
+				
+				if counter == 0 and strVal[counter] == "1":
+					vaq =  "1000000" + vaq
+
+			else:
+				vaq = strVal[counter] + vaq
+
+			counter -= 1
+
+		return vaq
+
 	def _parseTrack(self, binary_file):
 		ofs = 0
 		# Parse the track data
@@ -163,6 +198,9 @@ class MidiParser:
 					if self.verbose:
 						print("Read data {}, {}".format(hex(param1), hex(param2)))
 					ev = MidiChannelEvent(self.rsBuf, dataLength, dt, param1, param2)
+					print("====")
+					print(dataLength)
+					print(ev)
 					events.append(ev)
 
 		return TrackChunk(chunkId, chunkSize, events)
@@ -187,6 +225,82 @@ class MidiParser:
 					if self.verbose:
 						print("Track " + str(i + 1) + "/" + str(self.headerChunk.numberOfTracks))
 
+	def padhex(self, s, nrOfBytes):
+		hexStr = hex(s)[2:].zfill(nrOfBytes)
+		return bytearray.fromhex(hexStr)
+		
+	def bitstring_to_bytes(self, s):
+		return int(s, 2).to_bytes(len(s) // 8, byteorder='big')
+
+	def int_to_bytes(self, x):
+		return x.to_bytes((x.bit_length() + 7) // 8, 'big')
+
+	def parseToString(self):
+		file = "/Users/victoraxelsson/Desktop/data_projects/ML_project/resources/parsed.mid"
+		with open(file, "wb+") as f:
+
+			#Print header file
+			f.write(self.headerChunk.chunkID)
+			f.write(self.padhex(self.headerChunk.chunkSize, 8))
+			f.write(self.padhex(self.headerChunk.formatType, 4))
+			f.write(self.padhex(self.headerChunk.numberOfTracks, 4))
+			f.write(self.padhex(self.headerChunk.timeDivision, 4))
 
 
+
+			#Print tracks
+			for track in self.tracks:
+				f.write(track.chunkId)
+				
+				# 48 bytes meta data
+				# 6 * events
+				trackSize = 48 + (6 * len(track.events))
+				f.write(self.padhex(trackSize, 8))
+
+				counter = 0
+				#Print events
+				for event in track.events:
+
+					#print(event)
+					
+					vaq = self.vaqToString(event.deltaTime)
+					print(vaq)
+					vaqBytes = self.bitstring_to_bytes(vaq)
+					f.write(vaqBytes)
+					
+					if isinstance(event, MidiChannelEvent):
+	
+						#The type contains both the type (4 bits) and the midi channel (4 bits)
+						f.write(bytes((event.type,)))
+						print(event)
+						f.write(self.padhex(event.param1, 2))
+						f.write(self.padhex(event.param2, 2))
+				
+
+					elif isinstance(event, MetaEvent):
+
+						#print(self.padhex(event.data, event.length))
+						if event.type == 0x54:
+							f.write(bytes((0x00,)))
+							f.write(bytes((0x00,)))
+
+						f.write(bytes((0xFF,)))
+						f.write(bytes((event.type,)))
+						f.write(bytes((event.length,)))
+
+						vaq = self.vaqToString(event.deltaTime)
+						vaqBytes = self.bitstring_to_bytes(vaq)
+
+						f.write(self.int_to_bytes(event.data))
+					elif isinstance(event, EndOfTrack):
+						f.write(bytes((0xFF,)))
+						f.write(bytes((0x2f,)))
+						f.write(bytes((0x00,)))
+						
+
+					#elif isinstance(event, EndOfTrack):
+					#	f.write(bytes((0x00,)))
+
+					
+					
 
