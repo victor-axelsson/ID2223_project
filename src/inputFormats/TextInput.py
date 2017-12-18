@@ -22,21 +22,13 @@ class TextInput:
 		return ord(asciiChar)
 
 	def addNoteOnValue(self, time, note):
-		#print("Adding note " + note + " At time " + str(time))
-		#def __init__(self, type, length, deltaTime, param1, param2):
-		#cursor = cursor + round((event.deltaTime / self.trackFilter.ticksPerBeat) * 16)
-
 		deltaTime = time * self.template.headerChunk.timeDivision / 16
 		#type, length, deltaTime, param1, param2
 		event = MidiChannelEvent(0x90, 0, deltaTime, self.asciiToHex(note),  0x50)
 		self.events.append(event)
 
-
 	def addNoteOffValue(self, time, note):
-		#print("Removing note " + note + " At time " + str(time))
-		
 		deltaTime = time * self.template.headerChunk.timeDivision / 16
-
 		#type, length, deltaTime, param1, param2
 		event = MidiChannelEvent(0x80, 0, deltaTime, self.asciiToHex(note),  0x50)
 		self.events.append(event)
@@ -73,8 +65,6 @@ class TextInput:
 		pts = content.split(" ")
 		self._generateEvents(pts)
 
-		print(self.template.tracks[0].events)
-
 		#This is very tied to template file and won't work if you change the template
 		#Grab the template events and replace all note events with the new ones
 		templateTrack = self.template.tracks[0]
@@ -84,8 +74,9 @@ class TextInput:
 		templateTrack.events = newEvents
 		self.template.tracks = []
 		self.template.tracks.append(templateTrack)
-		self.template.parseToString()
+		
 
-
+	def saveToFile(self, filePath):
+		self.template.parseToString(filePath)
 
 

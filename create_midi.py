@@ -24,3 +24,4 @@ if __name__ == '__main__':
 	parser = MidiParser("resources/template.mid", verbose=False)
 	#textInput = TextInput(parser, "resources/template_track_all.txt")
 	textInput = TextInput(parser, "resources/bach_846_track_all.txt")
+	textInput.saveToFile("resources/parsed.mid")

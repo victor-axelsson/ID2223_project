@@ -235,8 +235,7 @@ class MidiParser:
 	def int_to_bytes(self, x):
 		return x.to_bytes((x.bit_length() + 7) // 8, 'big')
 
-	def parseToString(self):
-		file = "/Users/victoraxelsson/Desktop/data_projects/ML_project/resources/parsed.mid"
+	def parseToString(self, file):
 		with open(file, "wb+") as f:
 
 			#Print header file
@@ -245,8 +244,6 @@ class MidiParser:
 			f.write(self.padhex(self.headerChunk.formatType, 4))
 			f.write(self.padhex(self.headerChunk.numberOfTracks, 4))
 			f.write(self.padhex(self.headerChunk.timeDivision, 4))
-
-
 
 			#Print tracks
 			for track in self.tracks:
@@ -260,8 +257,6 @@ class MidiParser:
 				counter = 0
 				#Print events
 				for event in track.events:
-
-					#print(event)
 					
 					vaq = self.vaqToString(event.deltaTime)
 					print(vaq)
@@ -276,7 +271,6 @@ class MidiParser:
 						f.write(self.padhex(event.param1, 2))
 						f.write(self.padhex(event.param2, 2))
 				
-
 					elif isinstance(event, MetaEvent):
 
 						#print(self.padhex(event.data, event.length))
@@ -296,11 +290,3 @@ class MidiParser:
 						f.write(bytes((0xFF,)))
 						f.write(bytes((0x2f,)))
 						f.write(bytes((0x00,)))
-						
-
-					#elif isinstance(event, EndOfTrack):
-					#	f.write(bytes((0x00,)))
-
-					
-					
-
