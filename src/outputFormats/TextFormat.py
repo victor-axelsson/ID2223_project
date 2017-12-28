@@ -8,7 +8,10 @@ class TextFormat:
 		return value == type or ((value & 0xF0) >> 4) == type
 
 	def valToChar(self, val):
-		return chr(val)
+		if val < 34:
+			return chr(val + 174)
+		else:
+			return chr(val)
 
 	def createTrack(self, notes, width):
 

@@ -33,10 +33,10 @@ if __name__ == '__main__':
 
 	print("Getting the file count...")
 	#inputFolder = "midi_files_partitioned/" + sys.argv[1]
-	#inputFolder = "midi_files/Classical_Piano_piano-midi.de_MIDIRip"
-	#outputFolder = "midi_text"
-	inputFolder = "resources"
-	outputFolder = "resources"
+	inputFolder = "midi_files/Classical_Piano_piano-midi.de_MIDIRip"
+	outputFolder = "midi_text_32"
+	#inputFolder = "resources"
+	#outputFolder = "resources"
 
 	total = 0
 	for root, dirs, files in os.walk(inputFolder):
@@ -44,33 +44,32 @@ if __name__ == '__main__':
 
 	print("Total: " + str(total))
 
-
 	counter = 0
-	#for filename in glob.iglob( inputFolder +'/**/*.mid', recursive=True):
+	for filename in glob.iglob( inputFolder +'/**/*.mid', recursive=True):
 
-	#filename = 'midi_files/9/911.mid'
-	filename = 'resources/template.mid'
-	print(filename)
+		#filename = 'midi_files/9/911.mid'
+		#filename = 'resources/template.mid'
+		#print(filename)
 
-	saveFilepath = '/'.join(filename.replace(inputFolder, outputFolder).split("/")[:-1]) + "/"
-	name = filename.split("/")[-1].replace(".mid", "")
-	message = "[" + str(datetime.datetime.now().time()) + "] PARSING => " + str(counter) + "/" + str(total) + " " + str(counter/total * 100) + "%" + " FILE => " + saveFilepath + name
-	print(message)
-	print(saveFilepath)
-	
-	if not os.path.exists(saveFilepath):
-		os.makedirs(saveFilepath)
+		saveFilepath = '/'.join(filename.replace(inputFolder, outputFolder).split("/")[:-1]) + "/"
+		name = filename.split("/")[-1].replace(".mid", "")
+		message = "[" + str(datetime.datetime.now().time()) + "] PARSING => " + str(counter) + "/" + str(total) + " " + str(counter/total * 100) + "%" + " FILE => " + saveFilepath + name
+		print(message)
+		
+		if not os.path.exists(saveFilepath):
+			os.makedirs(saveFilepath)
 
-	parser = MidiParser(filename, verbose=False)
-	trackFilter = NoteTrackFilter(parser)
+		parser = MidiParser(filename, verbose=False)
+		
+		trackFilter = NoteTrackFilter(parser)
 
-	#Only parse type one
-	if trackFilter.isTypeOne:
-		drawer = TextFormat(saveFilepath, name)
-		#drawer = ImageFormat(saveFilepath, name)
-		formatter = AbsoluteOffsetParser(trackFilter, drawer)
-	else:
-		print("Skipping type 2 format")
-
-	counter += 1
-	sys.stdout.flush()
+		#Only parse type one
+		if trackFilter.isTypeOne:
+			drawer = TextFormat(saveFilepath, name)
+			#drawer = ImageFormat(saveFilepath, name)
+			formatter = AbsoluteOffsetParser(trackFilter, drawer)
+		else:
+			print("Skipping type 2 format")
+		
+		counter += 1
+		sys.stdout.flush()

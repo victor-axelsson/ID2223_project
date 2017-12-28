@@ -198,9 +198,6 @@ class MidiParser:
 					if self.verbose:
 						print("Read data {}, {}".format(hex(param1), hex(param2)))
 					ev = MidiChannelEvent(self.rsBuf, dataLength, dt, param1, param2)
-					print("====")
-					print(dataLength)
-					print(ev)
 					events.append(ev)
 
 		return TrackChunk(chunkId, chunkSize, events)
@@ -236,6 +233,8 @@ class MidiParser:
 		return x.to_bytes((x.bit_length() + 7) // 8, 'big')
 
 	def parseToString(self, file):
+
+		print("In here")
 		with open(file, "wb+") as f:
 
 			#Print header file

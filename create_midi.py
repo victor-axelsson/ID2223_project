@@ -23,5 +23,6 @@ if __name__ == '__main__':
 	#Start by reading in the template
 	parser = MidiParser("resources/template.mid", verbose=False)
 	#textInput = TextInput(parser, "resources/template_track_all.txt")
-	textInput = TextInput(parser, "resources/bach_846_track_all.txt")
+	#textInput = TextInput(parser, "resources/bach_846_track_all.txt")
+	textInput = TextInput(parser, "resources/example.txt")
 	textInput.saveToFile("resources/parsed.mid")

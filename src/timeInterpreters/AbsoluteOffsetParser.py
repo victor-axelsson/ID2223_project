@@ -5,6 +5,7 @@ class AbsoluteOffsetParser:
 
 	trackFilter = None
 	drawer = None
+	RESOLUTION = 16
 
 	def __init__(self, trackFilter, drawer):
 		self.trackFilter = trackFilter
@@ -48,7 +49,7 @@ class AbsoluteOffsetParser:
 				#print(event.type)
 
 
-				cursor = cursor + round((event.deltaTime / self.trackFilter.ticksPerBeat) * 16)
+				cursor = cursor + round((event.deltaTime / self.trackFilter.ticksPerBeat) * self.RESOLUTION)
 
 				if self.isOfType(event.type, 0x9) or self.isOfType(event.type, 0x8):
 					if isinstance(event, MidiChannelEvent):

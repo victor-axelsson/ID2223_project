@@ -6,6 +6,8 @@ class TextInput:
 	fileInput = None
 	events = None
 
+	RESOLUTION = 16
+
 	def __init__(self, midiTemplate, fileInput):
 		self.template = midiTemplate
 		self.fileInput = fileInput
@@ -22,13 +24,13 @@ class TextInput:
 		return ord(asciiChar)
 
 	def addNoteOnValue(self, time, note):
-		deltaTime = time * self.template.headerChunk.timeDivision / 16
+		deltaTime = time * self.template.headerChunk.timeDivision / self.RESOLUTION
 		#type, length, deltaTime, param1, param2
 		event = MidiChannelEvent(0x90, 0, deltaTime, self.asciiToHex(note),  0x50)
 		self.events.append(event)
 
 	def addNoteOffValue(self, time, note):
-		deltaTime = time * self.template.headerChunk.timeDivision / 16
+		deltaTime = time * self.template.headerChunk.timeDivision / self.RESOLUTION
 		#type, length, deltaTime, param1, param2
 		event = MidiChannelEvent(0x80, 0, deltaTime, self.asciiToHex(note),  0x50)
 		self.events.append(event)
