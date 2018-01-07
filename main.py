@@ -33,8 +33,8 @@ if __name__ == '__main__':
 
 	print("Getting the file count...")
 	#inputFolder = "midi_files_partitioned/" + sys.argv[1]
-	inputFolder = "midi_files/Classical_Piano_piano-midi.de_MIDIRip"
-	outputFolder = "midi_text_32"
+	inputFolder = "cello"
+	outputFolder = "cello_text"
 	#inputFolder = "resources"
 	#outputFolder = "resources"
 

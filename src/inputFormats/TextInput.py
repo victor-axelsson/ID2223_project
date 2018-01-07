@@ -40,6 +40,7 @@ class TextInput:
 
 		stack = set()
 		timeCursor = 0
+		noteWasAdded = False
 		for pt in pts:
 
 			#Take a shallow copy of the mem-stack
@@ -48,17 +49,20 @@ class TextInput:
 			for note in pt:
 				if note not in stack:
 					stack.add(note)
-					self.addNoteOnValue(max(0, timeCursor -1), note)
+					self.addNoteOnValue(max(0, timeCursor), note)
 					timeCursor = 0
+					noteWasAdded = True
 				else:
 					if note in stackCopy:
 						stackCopy.remove(note)
 
+
 			# Everything that is left in the stack copy was no longer being printed. Therefore, we create a note off
 			for note in stackCopy:
-				self.addNoteOffValue(max(0, timeCursor -1), note)
+				self.addNoteOffValue(max(0, timeCursor), note)
 				stack.remove(note)
 				timeCursor = 0
+
 
 			timeCursor += 1
 
