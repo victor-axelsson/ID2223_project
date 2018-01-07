@@ -10,11 +10,10 @@ from src.trackChunk import TrackChunk
 
 
 class MidiParser:
-
 	filepath = None
 	headerChunk = None
 	tracks = None
-	rsBuf = None    # Running status buffer, handles skipped status bytes in Channel Voice events
+	rsBuf = None  # Running status buffer, handles skipped status bytes in Channel Voice events
 	verbose = None
 
 	def __init__(self, filepath, format=True, verbose=True):
@@ -27,7 +26,7 @@ class MidiParser:
 		return int.from_bytes(byte, byteorder='big')
 
 	def _formatHeader(self, binary_file):
-		#Read the Header for the file
+		# Read the Header for the file
 		chunkID = binary_file.read(4)
 		chunkSize = self.toInt(binary_file.read(4))
 		formatType = self.toInt(binary_file.read(2))
@@ -44,7 +43,6 @@ class MidiParser:
 	def printByte(self, byte):
 		for bit, i in self.bits(byte):
 			print("Bit: " + str(bit) + " i: " + str(i))
-
 
 	def readVaq(self, stream):
 		"""
@@ -76,7 +74,7 @@ class MidiParser:
 		if newOffset > len(byteArray):
 			newOffset = len(byteArray)
 
-		return int.from_bytes(byteArray[offset : newOffset], byteorder='big'), newOffset
+		return int.from_bytes(byteArray[offset: newOffset], byteorder='big'), newOffset
 
 	def parseVaq(self, byteArray, offset=0):
 		dtbyte, offset = self.readBytes(1, byteArray, offset)
@@ -97,24 +95,24 @@ class MidiParser:
 		if len(strVal) % 8 > 0:
 			missingZeros = 8 - (len(strVal) % 8)
 
-		#Padd out missing zeros
+		# Padd out missing zeros
 		for i in range(0, missingZeros):
 			strVal = "0" + strVal
 
-		counter = len(strVal) -1
+		counter = len(strVal) - 1
 		vaq = ""
-		while(counter >= 0):
+		while (counter >= 0):
 
-			i = len(strVal) - counter -1
+			i = len(strVal) - counter - 1
 
 			if i % 7 == 0 and i > 0:
 				if i <= 8:
-					vaq =  strVal[counter] + "0" + vaq
+					vaq = strVal[counter] + "0" + vaq
 				else:
-					vaq =  strVal[counter] + "1" + vaq
+					vaq = strVal[counter] + "1" + vaq
 
 				if counter == 0 and strVal[counter] == "1":
-					vaq =  "1000000" + vaq
+					vaq = "1000000" + vaq
 
 			else:
 				vaq = strVal[counter] + vaq
@@ -161,7 +159,7 @@ class MidiParser:
 
 				if self.verbose:
 					print("Meta event: type {} with length {} and data {}".format(metaType, dataLength, data))
-				if metaType == 0x2f: # end of track
+				if metaType == 0x2f:  # end of track
 					events.append(EndOfTrack())
 					break
 				ev = MetaEvent(metaType, dataLength, data, dt)
@@ -170,14 +168,15 @@ class MidiParser:
 				if self.verbose:
 					print("Channel event with data={}".format(hex(statusByte)))
 				statusNibble = (statusByte >> 4)
-				channel = (statusByte & 0xFF) #TODO Currently unused
+				channel = (statusByte & 0xFF)  # TODO Currently unused
 
 				if 0x80 <= statusByte <= 0xEF:
 					# Buffer stores the statusByte when a Voice Category Status (ie, 0x80 to 0xEF) is received.
 					self.rsBuf = statusByte
 				else:
 					if self.verbose:
-						print("Running statusByte detected on {} (with running status={})".format(statusByte, hex(self.rsBuf)))
+						print("Running statusByte detected on {} (with running status={})".format(statusByte,
+																								  hex(self.rsBuf)))
 					# Reverse read so that byte can be used as param1
 					# self.rsBuf points to our correct status
 					ofs -= 1
@@ -199,19 +198,18 @@ class MidiParser:
 
 		return TrackChunk(chunkId, chunkSize, events)
 
-
 	def _format(self):
 		with open(self.filepath, "rb") as binary_file:
 
 			# Seek position and read N bytes
 			binary_file.seek(0)  # Go to beginning
 
-			#Grab the header of the file
+			# Grab the header of the file
 			self.headerChunk = self._formatHeader(binary_file)
 
 			self.tracks = []
 
-			#Grab all the tracks
+			# Grab all the tracks
 			for i in range(self.headerChunk.numberOfTracks):
 				track = self._parseTrack(binary_file)
 				if track != None:
@@ -234,10 +232,13 @@ class MidiParser:
 		return x.to_bytes((x.bit_length() + 7) // 8, 'big')
 
 	def parseToString(self, file):
+		skipEvents = {
+			0x54 # SMPTE Offset
+		}
 		with open(file, "wb") as f:
 			bytes_written = 0
 
-			#Print header file
+			# Print header file
 			bytes_written += f.write(self.headerChunk.chunkID)
 			bytes_written += f.write(self.padhex(self.headerChunk.chunkSize, 8))
 			bytes_written += f.write(self.padhex(self.headerChunk.formatType, 4))
@@ -245,35 +246,46 @@ class MidiParser:
 			bytes_written += f.write(self.padhex(self.headerChunk.timeDivision, 4))
 
 			track_size_pos = bytes_written
-			#Print tracks
+			# Print tracks
 			for track in self.tracks:
 				chunkIdBytes = f.write(track.chunkId)
 				bytes_written += chunkIdBytes
 				track_size_pos += chunkIdBytes
 
-
 				# Write dummy track size; will be updated after we know all bytes
 				bytes_written += f.write(self.padhex(0, 8))
 				bytes_written = 0
 
-				#Print events
+				# Print events
 				for event in track.events:
+					if event.type in skipEvents:
+						continue
+
 					event_bytes = 0
 					vaq = self.vaqToString(event.deltaTime)
 					vaqBytes = self.bitstring_to_bytes(vaq)
 					event_bytes += f.write(vaqBytes)
 
 					if isinstance(event, MidiChannelEvent):
-						#The type contains both the type (4 bits) and the midi channel (4 bits)
+						# The type contains both the type (4 bits) and the midi channel (4 bits)
 						event_bytes += f.write(bytes((event.type,)))
 						event_bytes += f.write(self.padhex(event.param1, 2))
 						event_bytes += f.write(self.padhex(event.param2, 2))
 
 					elif isinstance(event, MetaEvent):
 						event_bytes += f.write(bytes((0xFF,)))
+
 						event_bytes += f.write(bytes((event.type,)))
-						event_bytes += f.write(bytes((event.length,)))
-						event_bytes += f.write(self.int_to_bytes(event.data))
+
+						vaq = self.vaqToString(event.length)
+						vaqBytes = self.bitstring_to_bytes(vaq)
+
+						event_bytes += f.write(vaqBytes)
+						data_to_write = self.int_to_bytes(event.data)
+						# Need to ensure that event.data is 0-padded to a length of event.length bytes
+						if data_to_write == bytes(0):
+							data_to_write = bytearray([0x00] * event.length)
+						event_bytes += f.write(data_to_write)
 
 					elif isinstance(event, EndOfTrack):
 						event_bytes += f.write(bytes((0xFF,)))
@@ -284,4 +296,4 @@ class MidiParser:
 					if self.verbose:
 						print("Wrote {}/{} bytes".format(event_bytes, bytes_written))
 			f.seek(track_size_pos)
-			f.write(self.padhex(bytes_written + 1, 8))
+			f.write(self.padhex(bytes_written, 8))
