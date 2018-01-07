@@ -1,12 +1,13 @@
-from src.events.types import Events
 from src.headerChunk import HeaderChunk
-from src.trackChunk import TrackChunk
+import binascii
+
 from src.events.EndOfTrack import EndOfTrack
 from src.events.MetaEvent import MetaEvent
-from src.events.SystemExclusiveEvent import SystemExclusiveEvent
 from src.events.MidiChannelEvent import MidiChannelEvent
-import binascii
-from binascii import unhexlify
+from src.events.SystemExclusiveEvent import SystemExclusiveEvent
+from src.headerChunk import HeaderChunk
+from src.trackChunk import TrackChunk
+
 
 class MidiParser:
 
@@ -26,7 +27,7 @@ class MidiParser:
 		return int.from_bytes(byte, byteorder='big')
 
 	def _formatHeader(self, binary_file):
-		#Read the Header for the file		    
+		#Read the Header for the file
 		chunkID = binary_file.read(4)
 		chunkSize = self.toInt(binary_file.read(4))
 		formatType = self.toInt(binary_file.read(2))
@@ -72,10 +73,6 @@ class MidiParser:
 
 	def readBytes(self, n, byteArray, offset=0):
 		newOffset = offset + n
-		'''
-		if newOffset > len(byteArray):
-			raise Exception("Requested bytes ({})exceed byteArray length {}".format(newOffset, len(byteArray)))
-			'''
 		if newOffset > len(byteArray):
 			newOffset = len(byteArray)
 
@@ -102,12 +99,12 @@ class MidiParser:
 
 		#Padd out missing zeros
 		for i in range(0, missingZeros):
-			strVal = "0" + strVal 
+			strVal = "0" + strVal
 
 		counter = len(strVal) -1
 		vaq = ""
 		while(counter >= 0):
-			
+
 			i = len(strVal) - counter -1
 
 			if i % 7 == 0 and i > 0:
@@ -115,7 +112,7 @@ class MidiParser:
 					vaq =  strVal[counter] + "0" + vaq
 				else:
 					vaq =  strVal[counter] + "1" + vaq
-				
+
 				if counter == 0 and strVal[counter] == "1":
 					vaq =  "1000000" + vaq
 
@@ -222,10 +219,14 @@ class MidiParser:
 					if self.verbose:
 						print("Track " + str(i + 1) + "/" + str(self.headerChunk.numberOfTracks))
 
-	def padhex(self, s, nrOfBytes):
-		hexStr = hex(s)[2:].zfill(nrOfBytes)
+	def padhexbytes(self, s, nrOfBytes):
+		nrOfNibbles = nrOfBytes * 2
+		return self.padhex(s, nrOfNibbles)
+
+	def padhex(self, s, nrOfNibbles):
+		hexStr = hex(s)[2:].zfill(nrOfNibbles)
 		return bytearray.fromhex(hexStr)
-		
+
 	def bitstring_to_bytes(self, s):
 		return int(s, 2).to_bytes(len(s) // 8, byteorder='big')
 
@@ -233,59 +234,54 @@ class MidiParser:
 		return x.to_bytes((x.bit_length() + 7) // 8, 'big')
 
 	def parseToString(self, file):
-
-		print("In here")
-		with open(file, "wb+") as f:
+		with open(file, "wb") as f:
+			bytes_written = 0
 
 			#Print header file
-			f.write(self.headerChunk.chunkID)
-			f.write(self.padhex(self.headerChunk.chunkSize, 8))
-			f.write(self.padhex(self.headerChunk.formatType, 4))
-			f.write(self.padhex(self.headerChunk.numberOfTracks, 4))
-			f.write(self.padhex(self.headerChunk.timeDivision, 4))
+			bytes_written += f.write(self.headerChunk.chunkID)
+			bytes_written += f.write(self.padhex(self.headerChunk.chunkSize, 8))
+			bytes_written += f.write(self.padhex(self.headerChunk.formatType, 4))
+			bytes_written += f.write(self.padhex(self.headerChunk.numberOfTracks, 4))
+			bytes_written += f.write(self.padhex(self.headerChunk.timeDivision, 4))
 
+			track_size_pos = bytes_written
 			#Print tracks
 			for track in self.tracks:
-				f.write(track.chunkId)
-				
-				# 48 bytes meta data
-				# 6 * events
-				trackSize = 48 + (6 * len(track.events))
-				f.write(self.padhex(trackSize, 8))
+				chunkIdBytes = f.write(track.chunkId)
+				bytes_written += chunkIdBytes
+				track_size_pos += chunkIdBytes
 
-				counter = 0
+
+				# Write dummy track size; will be updated after we know all bytes
+				bytes_written += f.write(self.padhex(0, 8))
+				bytes_written = 0
+
 				#Print events
 				for event in track.events:
-					
+					event_bytes = 0
 					vaq = self.vaqToString(event.deltaTime)
-					print(vaq)
 					vaqBytes = self.bitstring_to_bytes(vaq)
-					f.write(vaqBytes)
-					
+					event_bytes += f.write(vaqBytes)
+
 					if isinstance(event, MidiChannelEvent):
-	
 						#The type contains both the type (4 bits) and the midi channel (4 bits)
-						f.write(bytes((event.type,)))
-						print(event)
-						f.write(self.padhex(event.param1, 2))
-						f.write(self.padhex(event.param2, 2))
-				
+						event_bytes += f.write(bytes((event.type,)))
+						event_bytes += f.write(self.padhex(event.param1, 2))
+						event_bytes += f.write(self.padhex(event.param2, 2))
+
 					elif isinstance(event, MetaEvent):
+						event_bytes += f.write(bytes((0xFF,)))
+						event_bytes += f.write(bytes((event.type,)))
+						event_bytes += f.write(bytes((event.length,)))
+						event_bytes += f.write(self.int_to_bytes(event.data))
 
-						#print(self.padhex(event.data, event.length))
-						if event.type == 0x54:
-							f.write(bytes((0x00,)))
-							f.write(bytes((0x00,)))
-
-						f.write(bytes((0xFF,)))
-						f.write(bytes((event.type,)))
-						f.write(bytes((event.length,)))
-
-						vaq = self.vaqToString(event.deltaTime)
-						vaqBytes = self.bitstring_to_bytes(vaq)
-
-						f.write(self.int_to_bytes(event.data))
 					elif isinstance(event, EndOfTrack):
-						f.write(bytes((0xFF,)))
-						f.write(bytes((0x2f,)))
-						f.write(bytes((0x00,)))
+						event_bytes += f.write(bytes((0xFF,)))
+						event_bytes += f.write(bytes((0x2f,)))
+						event_bytes += f.write(bytes((0x00,)))
+
+					bytes_written += event_bytes
+					if self.verbose:
+						print("Wrote {}/{} bytes".format(event_bytes, bytes_written))
+			f.seek(track_size_pos)
+			f.write(self.padhex(bytes_written + 1, 8))
