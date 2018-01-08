@@ -1,3 +1,4 @@
+import dictionary
 from src.events.MidiChannelEvent import MidiChannelEvent
 
 class TextInput:
@@ -11,6 +12,7 @@ class TextInput:
 	def __init__(self, midiTemplate, fileInput):
 		self.template = midiTemplate
 		self.fileInput = fileInput
+		self.dict = dictionary.getDictSwapped()
 		self._parse()
 
 	def grabFileContents(self, filePath):
@@ -21,13 +23,19 @@ class TextInput:
 		return content
 
 	def asciiToHex(self, asciiChar):
-		return ord(asciiChar)
+		# return ord(asciiChar)
+		if asciiChar in self.dict:
+			return self.dict[asciiChar]
+		else:
+			print("Invalid character! Replacing with blank")
+			return iter(self.dict.values()).__next__()
 
 	def addNoteOnValue(self, time, note):
 		deltaTime = time * self.template.headerChunk.timeDivision / self.RESOLUTION
 		#type, length, deltaTime, param1, param2
-		event = MidiChannelEvent(0x90, 0, deltaTime, self.asciiToHex(note),  0x50)
-		self.events.append(event)
+		if note in self.dict:
+			event = MidiChannelEvent(0x90, 0, deltaTime, self.asciiToHex(note),  0x50)
+			self.events.append(event)
 
 	def addNoteOffValue(self, time, note):
 		deltaTime = time * self.template.headerChunk.timeDivision / self.RESOLUTION
@@ -40,6 +48,7 @@ class TextInput:
 
 		stack = set()
 		timeCursor = 0
+		timeCursorChunk = 8
 		noteWasAdded = False
 		for pt in pts:
 
@@ -64,7 +73,7 @@ class TextInput:
 				timeCursor = 0
 
 
-			timeCursor += 1
+			timeCursor += timeCursorChunk
 
 	def _parse(self):
 		content = self.grabFileContents(self.fileInput)
